@@ -10,7 +10,7 @@ import { getUltimakerIcon } from "./icon-mapper"
  * Create an icon component that tries Carbon first, falls back to Ultimaker
  */
 export function createIcon(
-  CarbonIcon: ComponentType<SVGProps<SVGSVGElement>>,
+  CarbonIcon: ComponentType<any>,
   iconName: string
 ) {
   return function Icon(props: SVGProps<SVGSVGElement> & { size?: number | string; className?: string }) {

@@ -66,6 +66,7 @@ export function IconWrapper({
   }
   
   // Fallback to Carbon icon
-  return <CarbonIcon size={typeof size === "number" ? size : parseInt(size as string) || 16} className={className} {...props} />
+  const sizeValue = typeof size === "number" ? size : parseInt(size as string) || 16
+  return <CarbonIcon width={sizeValue} height={sizeValue} className={className} {...props} />
 }
 

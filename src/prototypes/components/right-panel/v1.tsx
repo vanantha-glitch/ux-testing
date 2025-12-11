@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
@@ -47,6 +47,7 @@ import {
 } from "@/components/ui/item"
 
 export default function RightPanelV1() {
+  const [activeTab, setActiveTab] = useState("prepare")
   const [profileOpen, setProfileOpen] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [infillValue, setInfillValue] = useState([20])
@@ -55,18 +56,24 @@ export default function RightPanelV1() {
   const [supportEnabled, setSupportEnabled] = useState(false)
   const [hoveredItem, setHoveredItem] = useState<string | null>(null)
 
+  // Reset collapsible states when switching tabs
+  useEffect(() => {
+    setProfileOpen(false)
+    setSettingsOpen(false)
+  }, [activeTab])
+
   return (
     <div 
-      className="w-[240px] bg-white rounded-lg shadow-sm flex flex-col h-[992px]"
+      className="w-[240px] bg-white rounded-lg shadow-sm flex flex-col h-[896px]"
       style={{
         width: '240px',
-        height: '992px',
-        maxHeight: '992px',
-        minHeight: '992px',
+        height: '896px',
+        maxHeight: '896px',
+        minHeight: '896px',
         boxSizing: 'border-box'
       }}
     >
-      <Tabs defaultValue="prepare" className="flex flex-col h-full">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="flex flex-col h-full">
         {/* Tabs Header */}
         <div className="px-2">
           <TabsList className="w-full justify-start bg-transparent h-auto p-0 gap-0">
@@ -194,13 +201,13 @@ export default function RightPanelV1() {
                     <CollapsibleContent className="flex-1 flex flex-col">
                       <div className="p-2 space-y-2 flex-1 min-h-0">
                       {/* Resolution Dropdown */}
-                      <div className="space-y-1">
+                      <div className="flex flex-col gap-2">
                         <div className="flex items-center gap-2">
                           <UltimakerIcon name="UltiMaker_PrintQuality" size={16} className="text-muted-foreground" />
-                          <Label className="text-xs font-normal text-[#282828]">Resolution</Label>
+                          <Label id="resolution-label-v1" htmlFor="resolution-select-v1" className="text-xs font-normal text-[#282828]">Resolution</Label>
                         </div>
                         <Select defaultValue="option">
-                          <SelectTrigger className="h-8 text-xs border-[#EAEAEA]">
+                          <SelectTrigger id="resolution-select-v1" className="h-8 text-xs border-[#EAEAEA]" aria-labelledby="resolution-label-v1">
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
@@ -234,7 +241,7 @@ export default function RightPanelV1() {
                                 const val = parseInt(e.target.value) || 0
                                 setInfillValue([Math.min(100, Math.max(0, val))])
                               }}
-                              className="text-xs text-center text-[#282828]"
+                              className="text-xs text-left text-[#282828]"
                             />
                             <InputGroupAddon align="inline-end">
                               <InputGroupText className="text-xs text-[#707070]">%</InputGroupText>
@@ -257,7 +264,7 @@ export default function RightPanelV1() {
                                 type="text"
                                 value={shellSide}
                                 onChange={(e) => setShellSide(e.target.value)}
-                                className="text-xs text-center text-[#282828]"
+                                className="text-xs text-left text-[#282828]"
                               />
                               <InputGroupAddon align="inline-end">
                                 <InputGroupText className="text-xs text-[#707070]">mm</InputGroupText>
@@ -271,7 +278,7 @@ export default function RightPanelV1() {
                                 type="text"
                                 value={shellTop}
                                 onChange={(e) => setShellTop(e.target.value)}
-                                className="text-xs text-center text-[#282828]"
+                                className="text-xs text-left text-[#282828]"
                               />
                               <InputGroupAddon align="inline-end">
                                 <InputGroupText className="text-xs text-[#707070]">mm</InputGroupText>
@@ -282,13 +289,13 @@ export default function RightPanelV1() {
                       </div>
 
                       {/* Infill Pattern */}
-                      <div className="space-y-1">
+                      <div className="flex flex-col gap-2">
                         <div className="flex items-center gap-2">
                           <UltimakerIcon name="Ultimaker-infill-2" size={16} className="text-muted-foreground" />
-                          <Label className="text-xs font-normal text-[#282828]">Infill Pattern</Label>
+                          <Label id="infill-pattern-label-v1" htmlFor="infill-pattern-select-v1" className="text-xs font-normal text-[#282828]">Infill Pattern</Label>
                         </div>
                         <Select defaultValue="option">
-                          <SelectTrigger className="h-8 text-xs border-[#EAEAEA]">
+                          <SelectTrigger id="infill-pattern-select-v1" className="h-8 text-xs border-[#EAEAEA]" aria-labelledby="infill-pattern-label-v1">
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>

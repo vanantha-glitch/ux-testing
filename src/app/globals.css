@@ -134,5 +134,34 @@
   [data-slot="item"].item-hover:hover {
     background-color: #000000 !important;
   }
+
+  /* Position RightPanel in context overlay */
+  .context-overlay-wrapper {
+    position: relative !important;
+    overflow: visible !important;
+  }
+  
+  /* Position right panel relative to the image container (1440x1024) */
+  .context-overlay-wrapper [data-right-panel] {
+    position: absolute !important;
+    display: block !important;
+    bottom: 16px !important;
+    right: 48px !important;
+    z-index: 30 !important;
+    pointer-events: auto !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+  }
+  
+  /* Prevent scroll container from clipping the right panel when in context mode */
+  .context-overlay-wrapper > div {
+    overflow: visible !important;
+  }
+  
+  /* Ensure any nested scroll containers don't clip the right panel */
+  .context-overlay-wrapper div[class*="overflow-y-auto"],
+  .context-overlay-wrapper div[class*="overflow-y-scroll"] {
+    overflow: visible !important;
+  }
 }
 

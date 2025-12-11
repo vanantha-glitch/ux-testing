@@ -47,6 +47,8 @@ import {
   CheckmarkFilled as CarbonCheckmarkFilled,
   Time as CarbonTime,
   OverflowMenuVertical as CarbonOverflowMenuVertical,
+  View as CarbonView,
+  ViewOff as CarbonViewOff,
 } from "@carbon/icons-react"
 
 // Export icons with automatic fallback
@@ -62,3 +64,5 @@ export const Settings = createIcon(CarbonSettings, "Settings")
 export const CheckmarkFilled = createIcon(CarbonCheckmarkFilled, "CheckmarkFilled")
 export const Time = createIcon(CarbonTime, "Time")
 export const OverflowMenuVertical = createIcon(CarbonOverflowMenuVertical, "OverflowMenuVertical")
+export const View = createIcon(CarbonView, "View")
+export const ViewOff = createIcon(CarbonViewOff, "ViewOff")

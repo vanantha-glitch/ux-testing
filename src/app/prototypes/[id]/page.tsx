@@ -4,15 +4,16 @@ import { useEffect, useState, Suspense } from "react"
 import { notFound, useParams, useRouter } from "next/navigation"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { ArrowLeft, Archive, TrashCan, Reset } from "@/lib/icons"
+import { ArrowLeft, TrashCan, View, ViewOff } from "@/lib/icons"
 import {
   getPrototype,
   getActiveVariations,
-  getArchivedVariations,
+  getBranches,
+  getVariationsForBranch,
+  getVariationDescription,
 } from "@/prototypes/registry"
 import {
   loadVariation,
-  loadArchivedVariation,
 } from "@/prototypes/component-loader"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import {
@@ -25,8 +26,18 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { ComponentType } from "react"
 import { Skeleton } from "@/components/ui/skeleton"
+import { Switch } from "@/components/ui/switch"
+import { Label } from "@/components/ui/label"
+import { ContextOverlay } from "@/components/context-overlay"
 
 function ComponentPageContent() {
   const params = useParams()
@@ -35,21 +46,33 @@ function ComponentPageContent() {
   const prototype = getPrototype(id)
 
   const [activeVariations, setActiveVariations] = useState<string[]>([])
-  const [archivedVariations, setArchivedVariations] = useState<string[]>([])
   const [loadedComponents, setLoadedComponents] = useState<Record<string, ComponentType>>({})
-  const [loadedArchivedComponents, setLoadedArchivedComponents] = useState<Record<string, ComponentType>>({})
   const [activeTab, setActiveTab] = useState<string>("")
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
-  const [variationToDelete, setVariationToDelete] = useState<{ id: string; isArchived: boolean } | null>(null)
+  const [variationToDelete, setVariationToDelete] = useState<string | null>(null)
+  const [contextEnabled, setContextEnabled] = useState<Record<string, boolean>>({ default: true })
+  const [selectedBranch, setSelectedBranch] = useState<string | null>(null)
+  const [showDescription, setShowDescription] = useState<Record<string, boolean>>({})
 
   useEffect(() => {
     if (!prototype) return
 
     if (prototype.hasVariations) {
-      const active = getActiveVariations(id)
-      const archived = getArchivedVariations(id)
+      // Get variations for selected branch (or all if no branch selected)
+      const active = getVariationsForBranch(id, selectedBranch)
       setActiveVariations(active)
-      setArchivedVariations(archived)
+      
+      // Initialize context enabled state to true for all variations
+      setContextEnabled((prev) => {
+        const updated = { ...prev }
+        active.forEach((variationId) => {
+          if (!(variationId in updated)) {
+            updated[variationId] = true
+          }
+        })
+        return updated
+      })
+      
       if (active.length > 0) {
         setActiveTab(active[0])
       }
@@ -57,7 +80,7 @@ function ComponentPageContent() {
       // Legacy component without variations
       setActiveTab("default")
     }
-  }, [id, prototype])
+  }, [id, prototype, selectedBranch])
 
   useEffect(() => {
     if (!prototype?.hasVariations || activeVariations.length === 0) return
@@ -85,61 +108,22 @@ function ComponentPageContent() {
     loadComponents()
   }, [id, activeVariations, prototype?.hasVariations])
 
-  useEffect(() => {
-    if (!prototype?.hasVariations || archivedVariations.length === 0) return
-
-    // Load all archived variation components
-    const loadArchivedComponents = async () => {
-      const components: Record<string, ComponentType> = {}
-      for (const variationId of archivedVariations) {
-        try {
-          const Component = await loadArchivedVariation(id, variationId)
-          if (Component) {
-            components[variationId] = Component
-          } else {
-            console.warn(`Failed to load archived variation ${variationId} for component ${id}`)
-          }
-        } catch (error) {
-          console.error(`Error loading archived variation ${variationId} for component ${id}:`, error)
-        }
-      }
-      if (Object.keys(components).length > 0) {
-        setLoadedArchivedComponents((prev) => ({ ...prev, ...components }))
-      }
-    }
-
-    loadArchivedComponents()
-  }, [id, archivedVariations, prototype?.hasVariations])
-
   if (!prototype) {
     notFound()
   }
 
-  const handleArchive = async (variationId: string) => {
-    // TODO: Implement archive functionality via API route or server action
-    console.log(`Archive ${variationId}`)
-    // For now, just show a message
-    alert(`Archive functionality will be implemented. Would archive: ${variationId}`)
-  }
-
-  const handleDelete = (variationId: string, isArchived: boolean) => {
-    setVariationToDelete({ id: variationId, isArchived })
+  const handleDelete = (variationId: string) => {
+    setVariationToDelete(variationId)
     setDeleteDialogOpen(true)
   }
 
   const confirmDelete = async () => {
     if (!variationToDelete) return
     // TODO: Implement delete functionality via API route or server action
-    console.log(`Delete ${variationToDelete.id} (archived: ${variationToDelete.isArchived})`)
+    console.log(`Delete ${variationToDelete}`)
     setDeleteDialogOpen(false)
     setVariationToDelete(null)
-    alert(`Delete functionality will be implemented. Would delete: ${variationToDelete.id}`)
-  }
-
-  const handleRestore = async (variationId: string) => {
-    // TODO: Implement restore functionality via API route or server action
-    console.log(`Restore ${variationId}`)
-    alert(`Restore functionality will be implemented. Would restore: ${variationId}`)
+    alert(`Delete functionality will be implemented. Would delete: ${variationToDelete}`)
   }
 
   // Legacy component (no variations)
@@ -161,8 +145,28 @@ function ComponentPageContent() {
         </div>
 
         <div className="bg-card border rounded-lg flex flex-col" style={{ minHeight: '992px' }}>
-          <div className="flex-1 overflow-y-auto">
-            <Component />
+          <div className="flex items-center justify-between p-6 pb-4 border-b flex-shrink-0">
+            <h2 className="text-lg font-semibold">Preview</h2>
+            <div className="flex items-center gap-3">
+              <Label htmlFor="context-toggle" className="text-sm font-normal cursor-pointer">
+                View in context
+              </Label>
+              <Switch
+                id="context-toggle"
+                checked={contextEnabled["default"] ?? true}
+                onCheckedChange={(checked) => setContextEnabled({ ...contextEnabled, default: checked })}
+              />
+            </div>
+          </div>
+          <div className="flex-1 overflow-hidden">
+            <ContextOverlay
+              enabled={contextEnabled["default"] ?? true}
+              onToggle={(enabled) => setContextEnabled({ ...contextEnabled, default: enabled })}
+            >
+              <div className="flex-1 overflow-y-auto">
+                <Component />
+              </div>
+            </ContextOverlay>
           </div>
         </div>
 
@@ -197,6 +201,9 @@ function ComponentPageContent() {
   }
 
   // Component with variations
+  const branches = getBranches(id)
+  const hasBranches = branches.length > 0
+
   return (
     <div className="container mx-auto py-8 px-4">
       <div className="mb-6">
@@ -206,112 +213,117 @@ function ComponentPageContent() {
             Back to Prototypes
           </Button>
         </Link>
-        <div className="mb-4">
-          <h1 className="text-3xl font-bold mb-2">{prototype.name}</h1>
-          <p className="text-muted-foreground">{prototype.description}</p>
+        <div className="mb-4 flex items-start justify-between gap-4">
+          <div className="flex-1">
+            <h1 className="text-3xl font-bold mb-2">{prototype.name}</h1>
+            <p className="text-muted-foreground">{prototype.description}</p>
+          </div>
+          {hasBranches && (
+            <div className="flex items-center gap-2 flex-shrink-0">
+              <Label htmlFor="branch-select" className="text-sm font-medium whitespace-nowrap">
+                Exploration Type
+              </Label>
+              <Select value={selectedBranch || "all"} onValueChange={(value) => setSelectedBranch(value === "all" ? null : value)}>
+                <SelectTrigger id="branch-select" className="w-[200px]">
+                  <SelectValue placeholder="Select exploration type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Variations</SelectItem>
+                  {branches.map((branch) => (
+                    <SelectItem key={branch.id} value={branch.id}>
+                      {branch.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
         </div>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <div className="flex items-center justify-between mb-4">
-          <TabsList className="flex-1">
+          <TabsList>
             {activeVariations.map((variationId) => (
               <TabsTrigger key={variationId} value={variationId}>
-                {variationId}
+                {variationId === "production" ? "Production" : variationId}
               </TabsTrigger>
             ))}
-            {archivedVariations.length > 0 && (
-              <TabsTrigger value="archive" className="ml-auto">
-                Archive ({archivedVariations.length})
-              </TabsTrigger>
-            )}
           </TabsList>
         </div>
 
         {activeVariations.map((variationId) => {
           const Component = loadedComponents[variationId]
+          const description = getVariationDescription(id, variationId)
+          const isProduction = variationId === "production"
+          const showDesc = showDescription[variationId] || false
+          
           return (
             <TabsContent key={variationId} value={variationId} className="mt-0">
               <div className="bg-card border rounded-lg flex flex-col" style={{ minHeight: '992px' }}>
-                <div className="flex items-center justify-between p-6 pb-4 border-b flex-shrink-0">
-                  <h2 className="text-lg font-semibold">Variation {variationId}</h2>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleArchive(variationId)}
-                  >
-                    <Archive size={16} className="mr-2" />
-                    Archive
-                  </Button>
-                </div>
-                <div className="flex-1 overflow-y-auto">
-                  {Component ? (
-                    <Component />
-                  ) : (
-                    <div className="p-6 space-y-4">
-                      <div className="text-sm text-muted-foreground">
-                        Loading component...
-                      </div>
-                      <Skeleton className="h-8 w-48" />
-                      <Skeleton className="h-64 w-full" />
+                <div className="flex flex-col p-6 pb-4 border-b flex-shrink-0 gap-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3 flex-1">
+                      <h2 className="text-lg font-semibold">
+                        {isProduction ? "Production" : `Variation ${variationId}`}
+                      </h2>
+                      {description && (
+                        <>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setShowDescription({ ...showDescription, [variationId]: !showDesc })}
+                            className="h-auto p-1 text-muted-foreground hover:text-foreground"
+                            aria-label={showDesc ? "Hide description" : "Show description"}
+                          >
+                            {showDesc ? <ViewOff size={16} /> : <View size={16} />}
+                          </Button>
+                          {showDesc && (
+                            <p className="text-sm text-muted-foreground">
+                              {description}
+                            </p>
+                          )}
+                        </>
+                      )}
                     </div>
-                  )}
+                    <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-3">
+                        <Label htmlFor={`context-toggle-${variationId}`} className="text-sm font-normal cursor-pointer">
+                          View in context
+                        </Label>
+                        <Switch
+                          id={`context-toggle-${variationId}`}
+                          checked={contextEnabled[variationId] ?? true}
+                          onCheckedChange={(checked) => setContextEnabled({ ...contextEnabled, [variationId]: checked })}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div className="flex-1 overflow-hidden">
+                  <ContextOverlay
+                    enabled={contextEnabled[variationId] ?? true}
+                    onToggle={(enabled) => setContextEnabled({ ...contextEnabled, [variationId]: enabled })}
+                  >
+                    <div className="flex-1 overflow-y-auto">
+                      {Component ? (
+                        <Component />
+                      ) : (
+                        <div className="p-6 space-y-4">
+                          <div className="text-sm text-muted-foreground">
+                            Loading component...
+                          </div>
+                          <Skeleton className="h-8 w-48" />
+                          <Skeleton className="h-64 w-full" />
+                        </div>
+                      )}
+                    </div>
+                  </ContextOverlay>
                 </div>
               </div>
             </TabsContent>
           )
         })}
-
-        {archivedVariations.length > 0 && (
-          <TabsContent value="archive" className="mt-0">
-            <div className="bg-muted/50 rounded-lg p-6">
-              <h2 className="text-xl font-semibold mb-4">Archived Variations</h2>
-              <div className="space-y-4">
-                {archivedVariations.map((variationId) => {
-                  const Component = loadedArchivedComponents[variationId]
-                  return (
-                    <div
-                      key={variationId}
-                      className="border rounded-lg p-4 bg-background"
-                    >
-                      <div className="flex items-center justify-between mb-4">
-                        <h3 className="text-lg font-medium">{variationId}</h3>
-                        <div className="flex gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleRestore(variationId)}
-                          >
-                            <Reset size={16} className="mr-2" />
-                            Restore
-                          </Button>
-                          <Button
-                            variant="destructive"
-                            size="sm"
-                            onClick={() => handleDelete(variationId, true)}
-                          >
-                            <TrashCan size={16} className="mr-2" />
-                            Delete
-                          </Button>
-                        </div>
-                      </div>
-                      <div className="border-t pt-4">
-                        {Component ? (
-                          <Component />
-                        ) : (
-                          <div className="space-y-2">
-                            <Skeleton className="h-4 w-full" />
-                            <Skeleton className="h-4 w-3/4" />
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
-            </div>
-          </TabsContent>
-        )}
       </Tabs>
 
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
@@ -319,7 +331,7 @@ function ComponentPageContent() {
           <AlertDialogHeader>
             <AlertDialogTitle>Are you sure?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will permanently delete variation {variationToDelete?.id}. This action cannot be undone.
+              This will permanently delete variation {variationToDelete}. This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

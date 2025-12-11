@@ -1,7 +1,7 @@
 /**
  * Variation Management Utilities
  * 
- * These functions handle archiving, deleting, and restoring component variations.
+ * These functions handle deleting and creating component variations.
  * 
  * IMPORTANT: In a Next.js environment, file operations cannot be performed from
  * client-side code. These functions should be called from:
@@ -13,7 +13,7 @@
  * server-side code. This file provides the interface and logic structure.
  * 
  * Example implementation:
- * - Create API routes: /api/prototypes/[id]/archive, /api/prototypes/[id]/delete, etc.
+ * - Create API routes: /api/prototypes/[id]/delete, etc.
  * - Or use Next.js Server Actions in a separate file
  */
 
@@ -27,70 +27,17 @@ export interface VariationOperationResult {
   error?: string
 }
 
-/**
- * Archive a variation by moving it to the archived/ subfolder
- */
-export async function archiveVariation(
-  componentId: string,
-  variationId: string
-): Promise<VariationOperationResult> {
-  try {
-    const prototype = getPrototype(componentId)
-    if (!prototype) {
-      return {
-        success: false,
-        message: `Component ${componentId} not found`,
-      }
-    }
-
-    if (!prototype.variations?.includes(variationId)) {
-      return {
-        success: false,
-        message: `Variation ${variationId} not found in active variations`,
-      }
-    }
-
-    const componentDir = path.join(process.cwd(), "src/prototypes/components", componentId)
-    const archivedDir = path.join(componentDir, "archived")
-    const sourceFile = path.join(componentDir, `${variationId}.tsx`)
-    const destFile = path.join(archivedDir, `${variationId}.tsx`)
-
-    // Ensure archived directory exists
-    await fs.mkdir(archivedDir, { recursive: true })
-
-    // Move file
-    await fs.rename(sourceFile, destFile)
-
-    // Update registry (this would need to be persisted)
-    // For now, this is a placeholder - actual implementation would update registry.ts
-    // and COMPONENTS.md
-
-    return {
-      success: true,
-      message: `Variation ${variationId} archived successfully`,
-    }
-  } catch (error) {
-    return {
-      success: false,
-      message: `Failed to archive variation ${variationId}`,
-      error: error instanceof Error ? error.message : String(error),
-    }
-  }
-}
 
 /**
  * Delete a variation permanently
  */
 export async function deleteVariation(
   componentId: string,
-  variationId: string,
-  isArchived: boolean = false
+  variationId: string
 ): Promise<VariationOperationResult> {
   try {
     const componentDir = path.join(process.cwd(), "src/prototypes/components", componentId)
-    const filePath = isArchived
-      ? path.join(componentDir, "archived", `${variationId}.tsx`)
-      : path.join(componentDir, `${variationId}.tsx`)
+    const filePath = path.join(componentDir, `${variationId}.tsx`)
 
     await fs.unlink(filePath)
 
@@ -109,50 +56,6 @@ export async function deleteVariation(
   }
 }
 
-/**
- * Restore an archived variation back to active
- */
-export async function restoreVariation(
-  componentId: string,
-  variationId: string
-): Promise<VariationOperationResult> {
-  try {
-    const prototype = getPrototype(componentId)
-    if (!prototype) {
-      return {
-        success: false,
-        message: `Component ${componentId} not found`,
-      }
-    }
-
-    if (!prototype.archivedVariations?.includes(variationId)) {
-      return {
-        success: false,
-        message: `Variation ${variationId} not found in archived variations`,
-      }
-    }
-
-    const componentDir = path.join(process.cwd(), "src/prototypes/components", componentId)
-    const archivedFile = path.join(componentDir, "archived", `${variationId}.tsx`)
-    const activeFile = path.join(componentDir, `${variationId}.tsx`)
-
-    // Move file back
-    await fs.rename(archivedFile, activeFile)
-
-    // Update registry (this would need to be persisted)
-
-    return {
-      success: true,
-      message: `Variation ${variationId} restored successfully`,
-    }
-  } catch (error) {
-    return {
-      success: false,
-      message: `Failed to restore variation ${variationId}`,
-      error: error instanceof Error ? error.message : String(error),
-    }
-  }
-}
 
 /**
  * Create a new variation based on an existing one

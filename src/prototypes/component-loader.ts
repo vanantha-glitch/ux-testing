@@ -9,6 +9,7 @@ import { ComponentType } from "react"
 // Import all variation components explicitly
 // Right Panel variations
 import RightPanelProduction from "./components/right-panel/production"
+import RightPanelV2 from "./components/right-panel/v2"
 
 // Type for component map
 type ComponentMap = Record<string, Record<string, ComponentType>>
@@ -17,15 +18,8 @@ type ComponentMap = Record<string, Record<string, ComponentType>>
 const componentMap: ComponentMap = {
   "right-panel": {
     production: RightPanelProduction,
+    "support.v2": RightPanelV2,
   },
-}
-
-// Map for archived components
-const archivedComponentMap: ComponentMap = {
-  // Add archived components here as needed
-  // "right-panel": {
-  //   v0: RightPanelV0,
-  // }
 }
 
 export function loadVariationSync(
@@ -35,13 +29,6 @@ export function loadVariationSync(
   return componentMap[componentId]?.[variationId] || null
 }
 
-export function loadArchivedVariationSync(
-  componentId: string,
-  variationId: string
-): ComponentType | null {
-  return archivedComponentMap[componentId]?.[variationId] || null
-}
-
 export async function loadVariation(
   componentId: string,
   variationId: string
@@ -49,12 +36,5 @@ export async function loadVariation(
   // For now, use sync loader
   // In the future, this could be extended to support async loading
   return loadVariationSync(componentId, variationId)
-}
-
-export async function loadArchivedVariation(
-  componentId: string,
-  variationId: string
-): Promise<ComponentType | null> {
-  return loadArchivedVariationSync(componentId, variationId)
 }
 

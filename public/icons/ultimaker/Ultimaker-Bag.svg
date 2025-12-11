@@ -1,0 +1,6 @@
+<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path fill-rule="evenodd" clip-rule="evenodd" d="M13 2H3L3 14H13V2ZM2 1V14C2 14.5523 2.44772 15 3 15H13C13.5523 15 14 14.5523 14 14V1H2Z" fill="black"/>
+<path d="M2 3H14V4H2V3Z" fill="black"/>
+<path fill-rule="evenodd" clip-rule="evenodd" d="M8 12C9.65685 12 11 10.6569 11 9C11 7.34315 9.65685 6 8 6C6.34315 6 5 7.34315 5 9C5 10.6569 6.34315 12 8 12ZM8 13C10.2091 13 12 11.2091 12 9C12 6.79086 10.2091 5 8 5C5.79086 5 4 6.79086 4 9C4 11.2091 5.79086 13 8 13Z" fill="black"/>
+<path fill-rule="evenodd" clip-rule="evenodd" d="M8 10C8.55228 10 9 9.55228 9 9C9 8.44772 8.55228 8 8 8C7.44772 8 7 8.44772 7 9C7 9.55228 7.44772 10 8 10Z" fill="black"/>
+</svg>

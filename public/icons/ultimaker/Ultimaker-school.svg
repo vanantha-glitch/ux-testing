@@ -1,0 +1,15 @@
+<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+<rect x="7" y="3" width="2" height="2" rx="1" fill="black"/>
+<rect x="7" y="10" width="2" height="4" fill="black"/>
+<rect x="7" y="6" width="2" height="1" fill="black"/>
+<rect x="7" y="8" width="2" height="1" fill="black"/>
+<rect x="3" y="11" width="1" height="1" fill="black"/>
+<rect x="12" y="11" width="1" height="1" fill="black"/>
+<rect x="3" y="7" width="1" height="1" fill="black"/>
+<rect x="3" y="9" width="1" height="1" fill="black"/>
+<rect x="12" y="7" width="1" height="1" fill="black"/>
+<rect x="12" y="9" width="1" height="1" fill="black"/>
+<path fill-rule="evenodd" clip-rule="evenodd" d="M1 5.5C1 4.94772 1.44772 4.5 2 4.5H6V15H1V5.5ZM2 5.5V14H5V5.5H2Z" fill="black"/>
+<path fill-rule="evenodd" clip-rule="evenodd" d="M10 4.5H14C14.5523 4.5 15 4.94772 15 5.5V15H10V4.5ZM11 5.5V14H14V5.5H11Z" fill="black"/>
+<path fill-rule="evenodd" clip-rule="evenodd" d="M8 0.961914L11 2.16191V15.0004H5V2.16191L8 0.961914ZM6 2.83895V14.0004H10V2.83895L8 2.03895L6 2.83895Z" fill="black"/>
+</svg>

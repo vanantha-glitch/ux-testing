@@ -38,6 +38,14 @@ import {
   Reset 
 } from "@/lib/icons"
 import { UltimakerIcon } from "@/components/icons/ultimaker-icon"
+import {
+  Item,
+  ItemActions,
+  ItemContent,
+  ItemDescription,
+  ItemMedia,
+  ItemTitle,
+} from "@/components/ui/item"
 
 export default function RightPanelProduction() {
   const [activeTab, setActiveTab] = useState("prepare")
@@ -51,6 +59,7 @@ export default function RightPanelProduction() {
   const [adhesionValue, setAdhesionValue] = useState("Off")
   const [settingsContentRef, setSettingsContentRef] = useState<HTMLDivElement | null>(null)
   const [showScrollIndicator, setShowScrollIndicator] = useState(false)
+  const [hoveredItem, setHoveredItem] = useState<string | null>(null)
 
   // Check if content overflows and show scroll indicator
   useEffect(() => {
@@ -117,9 +126,9 @@ export default function RightPanelProduction() {
         </div>
 
         {/* Prepare Tab Content */}
-        <TabsContent value="prepare" className="flex-1 flex flex-col m-0 p-0 overflow-y-auto">
+        <TabsContent value="prepare" className="flex-1 flex flex-col m-0 p-0 overflow-hidden">
           {/* Settings Container - fills space */}
-          <div className="flex-1 flex flex-col w-full min-w-0">
+          <div className="flex-1 flex flex-col w-full min-w-0 min-h-0">
             {/* Printer Configuration Section - PanelSectionShell */}
             <div className="flex flex-col p-2 border-b border-[#EAEAEA] flex-shrink-0">
                 <div className="space-y-2">
@@ -128,32 +137,60 @@ export default function RightPanelProduction() {
                 </div>
                 <div className="space-y-1">
                   {/* Printer Type */}
-                  <div className="flex items-center gap-2 px-2 py-2 rounded hover:bg-muted/50 h-10">
-                    <Printer size={16} className="text-muted-foreground flex-shrink-0" />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs text-[#282828]">Printer Type</p>
-                    </div>
-                  </div>
+                  <Item 
+                    size="sm" 
+                    className="h-10 cursor-pointer transition-colors"
+                    style={{ backgroundColor: hoveredItem === 'printer' ? '#F8F8F8' : 'transparent' }}
+                    onMouseEnter={() => setHoveredItem('printer')}
+                    onMouseLeave={() => setHoveredItem(null)}
+                  >
+                    <ItemMedia>
+                      <Printer size={16} className="text-muted-foreground" />
+                    </ItemMedia>
+                    <ItemContent>
+                      <ItemTitle className="text-xs text-[#282828]">Printer Type</ItemTitle>
+                    </ItemContent>
+                  </Item>
                   
                   {/* Material Type 1 */}
-                  <div className="flex items-start gap-2 px-2 py-2 rounded hover:bg-muted/50 min-h-[52px]">
-                    <Package size={16} className="text-muted-foreground mt-0.5 flex-shrink-0" />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs text-[#282828]">Material Type</p>
-                      <p className="text-xs text-[#707070]">Secondary Info</p>
-                      <p className="text-xs text-[#707070] text-right mt-1">Core</p>
-                    </div>
-                  </div>
+                  <Item 
+                    size="sm" 
+                    className="min-h-[52px] cursor-pointer transition-colors"
+                    style={{ backgroundColor: hoveredItem === 'material1' ? '#F8F8F8' : 'transparent' }}
+                    onMouseEnter={() => setHoveredItem('material1')}
+                    onMouseLeave={() => setHoveredItem(null)}
+                  >
+                    <ItemMedia>
+                      <Package size={16} className="text-muted-foreground" />
+                    </ItemMedia>
+                    <ItemContent>
+                      <ItemTitle className="text-xs text-[#282828]">Material Type</ItemTitle>
+                      <ItemDescription className="text-xs text-[#707070]">Secondary Info</ItemDescription>
+                    </ItemContent>
+                    <ItemActions>
+                      <p className="text-xs text-[#707070]">Core</p>
+                    </ItemActions>
+                  </Item>
                   
                   {/* Material Type 2 */}
-                  <div className="flex items-start gap-2 px-2 py-2 rounded hover:bg-muted/50 min-h-[52px]">
-                    <Package size={16} className="text-muted-foreground mt-0.5 flex-shrink-0" />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs text-[#282828]">Material Type</p>
-                      <p className="text-xs text-[#707070]">Secondary Info</p>
-                      <p className="text-xs text-[#707070] text-right mt-1">Core</p>
-                    </div>
-                  </div>
+                  <Item 
+                    size="sm" 
+                    className="min-h-[52px] cursor-pointer transition-colors"
+                    style={{ backgroundColor: hoveredItem === 'material2' ? '#F8F8F8' : 'transparent' }}
+                    onMouseEnter={() => setHoveredItem('material2')}
+                    onMouseLeave={() => setHoveredItem(null)}
+                  >
+                    <ItemMedia>
+                      <Package size={16} className="text-muted-foreground" />
+                    </ItemMedia>
+                    <ItemContent>
+                      <ItemTitle className="text-xs text-[#282828]">Material Type</ItemTitle>
+                      <ItemDescription className="text-xs text-[#707070]">Secondary Info</ItemDescription>
+                    </ItemContent>
+                    <ItemActions>
+                      <p className="text-xs text-[#707070]">Core</p>
+                    </ItemActions>
+                  </Item>
                 </div>
                 </div>
               </div>
@@ -183,8 +220,8 @@ export default function RightPanelProduction() {
               </div>
 
               {/* Settings Section - PanelSectionShell - fills remaining space */}
-              <div className="flex-1 flex flex-col w-full min-w-0 p-2 border-b border-[#EAEAEA]">
-                <Collapsible open={settingsOpen} onOpenChange={setSettingsOpen} className="flex-1 flex flex-col w-full min-w-0">
+              <div className="flex-1 flex flex-col w-full min-w-0 min-h-0 p-2 border-b border-[#EAEAEA]">
+                <Collapsible open={settingsOpen} onOpenChange={setSettingsOpen} className="flex-1 flex flex-col w-full min-w-0 min-h-0">
                   <CollapsibleTrigger className="w-full px-2 py-2 flex items-center justify-between hover:bg-muted/50 rounded-t flex-shrink-0">
                     <div className="flex items-center gap-2">
                       <h3 className="text-xs font-semibold text-[#282828]">Settings</h3>
@@ -195,7 +232,7 @@ export default function RightPanelProduction() {
                       <ChevronUp size={16} className="text-muted-foreground" />
                     )}
                   </CollapsibleTrigger>
-                  <div className="flex-1 flex flex-col w-full min-w-0 min-h-0 relative overflow-x-hidden">
+                  <div className="flex-1 flex flex-col w-full min-w-0 min-h-0 relative overflow-hidden">
                     {/* Collapsed State - Summary View - fills space, content at top */}
                     {!settingsOpen && (
                       <div className="flex-1 flex flex-col min-h-0 px-2 py-2">
@@ -226,8 +263,8 @@ export default function RightPanelProduction() {
                       </div>
                     )}
                     {/* Expanded State - Full Form */}
-                    <CollapsibleContent className="flex-1 flex flex-col w-full min-w-0 overflow-x-hidden" style={{ width: '100%', maxWidth: '100%' }}>
-                      <ScrollArea className="flex-1 w-full min-w-0 max-w-[224px]" style={{ width: '100%', maxWidth: '224px' }}>
+                    <CollapsibleContent className="flex-1 flex flex-col w-full min-w-0 overflow-hidden min-h-0" style={{ width: '100%', maxWidth: '100%' }}>
+                      <ScrollArea className="flex-1 w-full min-w-0 max-w-[224px] h-full min-h-0" style={{ width: '100%', maxWidth: '224px', height: '100%' }}>
                         <div 
                           ref={setSettingsContentRef}
                           className="w-full min-w-0 max-w-[224px] px-2 py-2 space-y-2"
@@ -264,9 +301,9 @@ export default function RightPanelProduction() {
                                 onValueChange={setInfillValue}
                                 max={100}
                                 step={1}
-                                className="w-[125px]"
+                                className="flex-1"
                               />
-                              <InputGroup className="flex-1 h-8 border-[#EAEAEA]">
+                              <InputGroup className="!w-[72px] !min-w-[72px] !max-w-[72px] flex-shrink-0 h-8 border-[#EAEAEA]" style={{ width: '72px', minWidth: '72px', maxWidth: '72px' }}>
                                 <InputGroupInput
                                   type="text"
                                   value={infillValue[0]}

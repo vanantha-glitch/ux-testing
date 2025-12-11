@@ -37,6 +37,14 @@ import {
   OverflowMenuVertical 
 } from "@/lib/icons"
 import { UltimakerIcon } from "@/components/icons/ultimaker-icon"
+import {
+  Item,
+  ItemActions,
+  ItemContent,
+  ItemDescription,
+  ItemMedia,
+  ItemTitle,
+} from "@/components/ui/item"
 
 export default function RightPanelV1() {
   const [profileOpen, setProfileOpen] = useState(false)
@@ -45,6 +53,7 @@ export default function RightPanelV1() {
   const [shellSide, setShellSide] = useState("1")
   const [shellTop, setShellTop] = useState("1")
   const [supportEnabled, setSupportEnabled] = useState(false)
+  const [hoveredItem, setHoveredItem] = useState<string | null>(null)
 
   return (
     <div 
@@ -87,32 +96,60 @@ export default function RightPanelV1() {
                 </div>
                 <div className="space-y-1">
                   {/* Printer Type */}
-                  <div className="flex items-center gap-2 px-2 py-2 rounded hover:bg-muted/50 h-10">
-                    <Printer size={16} className="text-muted-foreground flex-shrink-0" />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs text-[#282828]">Printer Type</p>
-                    </div>
-                  </div>
+                  <Item 
+                    size="sm" 
+                    className="h-10 cursor-pointer transition-colors"
+                    style={{ backgroundColor: hoveredItem === 'printer' ? '#F8F8F8' : 'transparent' }}
+                    onMouseEnter={() => setHoveredItem('printer')}
+                    onMouseLeave={() => setHoveredItem(null)}
+                  >
+                    <ItemMedia>
+                      <Printer size={16} className="text-muted-foreground" />
+                    </ItemMedia>
+                    <ItemContent>
+                      <ItemTitle className="text-xs text-[#282828]">Printer Type</ItemTitle>
+                    </ItemContent>
+                  </Item>
                   
                   {/* Material Type 1 */}
-                  <div className="flex items-start gap-2 px-2 py-2 rounded hover:bg-muted/50 min-h-[52px]">
-                    <Package size={16} className="text-muted-foreground mt-0.5 flex-shrink-0" />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs text-[#282828]">Material Type</p>
-                      <p className="text-xs text-[#707070]">Secondary Info</p>
-                      <p className="text-xs text-[#707070] text-right mt-1">Core</p>
-                    </div>
-                  </div>
+                  <Item 
+                    size="sm" 
+                    className="min-h-[52px] cursor-pointer transition-colors"
+                    style={{ backgroundColor: hoveredItem === 'material1' ? '#F8F8F8' : 'transparent' }}
+                    onMouseEnter={() => setHoveredItem('material1')}
+                    onMouseLeave={() => setHoveredItem(null)}
+                  >
+                    <ItemMedia>
+                      <Package size={16} className="text-muted-foreground" />
+                    </ItemMedia>
+                    <ItemContent>
+                      <ItemTitle className="text-xs text-[#282828]">Material Type</ItemTitle>
+                      <ItemDescription className="text-xs text-[#707070]">Secondary Info</ItemDescription>
+                    </ItemContent>
+                    <ItemActions>
+                      <p className="text-xs text-[#707070]">Core</p>
+                    </ItemActions>
+                  </Item>
                   
                   {/* Material Type 2 */}
-                  <div className="flex items-start gap-2 px-2 py-2 rounded hover:bg-muted/50 min-h-[52px]">
-                    <Package size={16} className="text-muted-foreground mt-0.5 flex-shrink-0" />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs text-[#282828]">Material Type</p>
-                      <p className="text-xs text-[#707070]">Secondary Info</p>
-                      <p className="text-xs text-[#707070] text-right mt-1">Core</p>
-                    </div>
-                  </div>
+                  <Item 
+                    size="sm" 
+                    className="min-h-[52px] cursor-pointer transition-colors"
+                    style={{ backgroundColor: hoveredItem === 'material2' ? '#F8F8F8' : 'transparent' }}
+                    onMouseEnter={() => setHoveredItem('material2')}
+                    onMouseLeave={() => setHoveredItem(null)}
+                  >
+                    <ItemMedia>
+                      <Package size={16} className="text-muted-foreground" />
+                    </ItemMedia>
+                    <ItemContent>
+                      <ItemTitle className="text-xs text-[#282828]">Material Type</ItemTitle>
+                      <ItemDescription className="text-xs text-[#707070]">Secondary Info</ItemDescription>
+                    </ItemContent>
+                    <ItemActions>
+                      <p className="text-xs text-[#707070]">Core</p>
+                    </ItemActions>
+                  </Item>
                 </div>
               </div>
 

@@ -125,3 +125,14 @@
   }
 }
 
+@layer utilities {
+  .item-hover:hover,
+  [data-slot="item"].item-hover:hover {
+    background-color: #000000 !important;
+  }
+  
+  [data-slot="item"].item-hover:hover {
+    background-color: #000000 !important;
+  }
+}
+

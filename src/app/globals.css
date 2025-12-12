@@ -14,6 +14,25 @@
     --popover-foreground: 0 0% 20%;
     --primary: 241.5859 91.9028% 48.4314%;
     --primary-foreground: 0 0% 100%;
+    /* Button colors from Figma design system */
+    --button-primary: #100AED;
+    --button-primary-hover: #0E08C9;
+    --button-primary-active: #0C08B2;
+    --button-danger: #FF0021;
+    --button-danger-hover: #CC001A;
+    --button-danger-active: #990014;
+    --button-ghost-hover: #F2F4F8;
+    --button-ghost-active: #C3C2FB;
+    --button-ghost-neutral-hover: #EAEAEA;
+    --button-ghost-neutral-active: #C6C6C6;
+    --button-outlined-border: #100AED;
+    --button-outlined-neutral-border: #EAEAEA;
+    --button-outlined-danger-border: #FF0021;
+    --button-outlined-hover: #F2F4F8;
+    --button-outlined-danger-hover: #FFE6E9;
+    --button-outlined-danger-active: #FF99A6;
+    --button-disabled: #C6C6C6;
+    --button-disabled-text: #A9A9A9;
     --secondary: 220.0000 14.2857% 95.8824%;
     --secondary-foreground: 215 13.7931% 34.1176%;
     --muted: 210 20.0000% 98.0392%;
@@ -24,7 +43,7 @@
     --destructive-foreground: 0 0% 100%;
     --border: 220 13.0435% 90.9804%;
     --input: 220 13.0435% 90.9804%;
-    --ring: 217.2193 91.2195% 59.8039%;
+    --ring: 241.5859 91.9028% 48.4314%;
     --chart-1: 217.2193 91.2195% 59.8039%;
     --chart-2: 221.2121 83.1933% 53.3333%;
     --chart-3: 224.2781 76.3265% 48.0392%;

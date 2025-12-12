@@ -118,19 +118,25 @@ export default function RightPanelV2() {
           boxSizing: 'border-box'
         }}
       >
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="flex flex-col h-full w-full">
+      <Tabs value={activeTab} onValueChange={setActiveTab} defaultValue="prepare" className="flex flex-col h-full w-full">
         {/* Tabs Header */}
-        <div className="px-2">
-          <TabsList className="!inline-flex !w-full !justify-start !bg-transparent !h-auto !p-0 !gap-0 !border-0 !rounded-none">
+        <div className="w-full h-[42px] bg-background rounded-none p-0 relative" style={{ borderBottom: '1px solid #EAEAEA' }}>
+          <TabsList className="inline-flex items-center text-muted-foreground w-full h-full bg-transparent rounded-none border-0 p-0 justify-start">
             <TabsTrigger
               value="prepare"
-              className="!inline-flex !items-center !justify-center !whitespace-nowrap !rounded-none !px-2 !py-3 !text-xs !font-normal !border-b-2 !border-transparent !bg-transparent !shadow-none !ring-0 !ring-offset-0 data-[state=active]:!border-[#0C08B2] data-[state=active]:!bg-transparent data-[state=active]:!text-[#282828] data-[state=active]:!shadow-none text-[#707070] data-[state=active]:!text-[#282828]"
+              className="rounded-none border-0 bg-transparent px-2 py-3 text-xs font-normal text-[#707070] shadow-none h-full relative border-b-[3px] border-transparent data-[state=active]:border-[#0C08B2] data-[state=active]:bg-transparent data-[state=active]:text-[#282828] data-[state=active]:font-medium data-[state=active]:shadow-none"
+              style={{
+                marginBottom: '-1px'
+              }}
             >
               Prepare
             </TabsTrigger>
             <TabsTrigger
               value="preview"
-              className="!inline-flex !items-center !justify-center !whitespace-nowrap !rounded-none !px-2 !py-3 !text-xs !font-normal !border-b-2 !border-transparent !bg-transparent !shadow-none !ring-0 !ring-offset-0 data-[state=active]:!border-[#0C08B2] data-[state=active]:!bg-transparent data-[state=active]:!text-[#282828] data-[state=active]:!shadow-none text-[#707070]"
+              className="rounded-none border-0 bg-transparent px-2 py-3 text-xs font-normal text-[#707070] shadow-none h-full relative border-b-[3px] border-transparent data-[state=active]:border-[#0C08B2] data-[state=active]:bg-transparent data-[state=active]:text-[#282828] data-[state=active]:font-medium data-[state=active]:shadow-none"
+              style={{
+                marginBottom: '-1px'
+              }}
             >
               Preview
             </TabsTrigger>

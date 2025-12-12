@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState, Suspense } from "react"
-import { notFound, useParams, useRouter } from "next/navigation"
+import { useParams, useRouter } from "next/navigation"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { ArrowLeft, TrashCan, View, ViewOff } from "@/lib/icons"
@@ -53,6 +53,7 @@ function ComponentPageContent() {
   const [contextEnabled, setContextEnabled] = useState<Record<string, boolean>>({ default: true })
   const [selectedBranch, setSelectedBranch] = useState<string | null>(null)
   const [showDescription, setShowDescription] = useState<Record<string, boolean>>({})
+  const [loadingErrors, setLoadingErrors] = useState<Record<string, string>>({})
 
   useEffect(() => {
     if (!prototype) return
@@ -74,7 +75,10 @@ function ComponentPageContent() {
       })
       
       if (active.length > 0) {
-        setActiveTab(active[0])
+        // Check for hash in URL to set initial tab
+        const hash = typeof window !== "undefined" ? window.location.hash.slice(1) : ""
+        const hashVariation = hash && active.includes(hash) ? hash : null
+        setActiveTab(hashVariation || active[0])
       }
     } else {
       // Legacy component without variations
@@ -82,23 +86,56 @@ function ComponentPageContent() {
     }
   }, [id, prototype, selectedBranch])
 
+  // Handle hash changes for direct navigation to variations
+  useEffect(() => {
+    if (!prototype?.hasVariations) return
+
+    const handleHashChange = () => {
+      const hash = window.location.hash.slice(1)
+      if (hash && activeVariations.includes(hash)) {
+        setActiveTab(hash)
+      }
+    }
+
+    // Check initial hash
+    handleHashChange()
+
+    // Listen for hash changes
+    window.addEventListener("hashchange", handleHashChange)
+    return () => window.removeEventListener("hashchange", handleHashChange)
+  }, [prototype, activeVariations])
+
   useEffect(() => {
     if (!prototype?.hasVariations || activeVariations.length === 0) return
 
     // Load all active variation components
     const loadComponents = async () => {
       const components: Record<string, ComponentType> = {}
+      const errors: Record<string, string> = {}
       for (const variationId of activeVariations) {
         try {
           const Component = await loadVariation(id, variationId)
           if (Component) {
             components[variationId] = Component
+            // Clear any previous error for this variation
+            setLoadingErrors((prev) => {
+              const updated = { ...prev }
+              delete updated[variationId]
+              return updated
+            })
           } else {
-            console.warn(`Failed to load variation ${variationId} for component ${id}`)
+            const errorMsg = `Failed to load variation ${variationId} for component ${id}`
+            console.warn(errorMsg)
+            errors[variationId] = errorMsg
           }
         } catch (error) {
+          const errorMsg = error instanceof Error ? error.message : `Error loading variation ${variationId}`
           console.error(`Error loading variation ${variationId} for component ${id}:`, error)
+          errors[variationId] = errorMsg
         }
+      }
+      if (Object.keys(errors).length > 0) {
+        setLoadingErrors((prev) => ({ ...prev, ...errors }))
       }
       if (Object.keys(components).length > 0) {
         setLoadedComponents((prev) => ({ ...prev, ...components }))
@@ -109,7 +146,27 @@ function ComponentPageContent() {
   }, [id, activeVariations, prototype?.hasVariations])
 
   if (!prototype) {
-    notFound()
+    return (
+      <div className="container mx-auto py-8 px-4">
+        <div className="mb-6">
+          <Link href="/prototypes">
+            <Button variant="ghost" className="mb-4">
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Back to Prototypes
+            </Button>
+          </Link>
+        </div>
+        <div className="bg-card border rounded-lg p-8 text-center">
+          <h1 className="text-2xl font-bold mb-2">Prototype Not Found</h1>
+          <p className="text-muted-foreground mb-4">
+            The prototype with ID &quot;{id}&quot; could not be found.
+          </p>
+          <Link href="/prototypes">
+            <Button>View All Prototypes</Button>
+          </Link>
+        </div>
+      </div>
+    )
   }
 
   const handleDelete = (variationId: string) => {
@@ -308,6 +365,39 @@ function ComponentPageContent() {
                     <div className="flex-1 overflow-y-auto">
                       {Component ? (
                         <Component />
+                      ) : loadingErrors[variationId] ? (
+                        <div className="p-6 space-y-4">
+                          <div className="text-sm text-destructive font-medium">
+                            Failed to load component
+                          </div>
+                          <div className="text-sm text-muted-foreground">
+                            {loadingErrors[variationId]}
+                          </div>
+                          <Button
+                            variant="outline"
+                            onClick={() => {
+                              // Retry loading
+                              const loadComponent = async () => {
+                                try {
+                                  const Component = await loadVariation(id, variationId)
+                                  if (Component) {
+                                    setLoadedComponents((prev) => ({ ...prev, [variationId]: Component }))
+                                    setLoadingErrors((prev) => {
+                                      const updated = { ...prev }
+                                      delete updated[variationId]
+                                      return updated
+                                    })
+                                  }
+                                } catch (error) {
+                                  console.error(`Retry failed for ${variationId}:`, error)
+                                }
+                              }
+                              loadComponent()
+                            }}
+                          >
+                            Retry
+                          </Button>
+                        </div>
                       ) : (
                         <div className="p-6 space-y-4">
                           <div className="text-sm text-muted-foreground">

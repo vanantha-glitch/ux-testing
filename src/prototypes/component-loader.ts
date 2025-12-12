@@ -10,6 +10,11 @@ import { ComponentType } from "react"
 // Right Panel variations
 import RightPanelProduction from "./components/right-panel/production"
 import RightPanelV2 from "./components/right-panel/v2"
+import RightPanelBehaviorV2 from "./components/right-panel/behavior-v2"
+import RightPanelBehaviorV3 from "./components/right-panel/behavior-v3"
+
+// Top Bar variations
+import TopBarProduction from "./components/top-bar/production"
 
 // Type for component map
 type ComponentMap = Record<string, Record<string, ComponentType>>
@@ -19,6 +24,11 @@ const componentMap: ComponentMap = {
   "right-panel": {
     production: RightPanelProduction,
     "support.v2": RightPanelV2,
+    "behavior.v2": RightPanelBehaviorV2,
+    "behavior.v3": RightPanelBehaviorV3,
+  },
+  "top-bar": {
+    production: TopBarProduction,
   },
 }
 

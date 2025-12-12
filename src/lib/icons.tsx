@@ -41,6 +41,7 @@ import {
   Reset as CarbonReset,
   ChevronDown as CarbonChevronDown,
   ChevronUp as CarbonChevronUp,
+  CaretDown as CarbonCaretDown,
   Printer as CarbonPrinter,
   Package as CarbonPackage,
   Settings as CarbonSettings,
@@ -49,6 +50,13 @@ import {
   OverflowMenuVertical as CarbonOverflowMenuVertical,
   View as CarbonView,
   ViewOff as CarbonViewOff,
+  Folder as CarbonFolder,
+  Edit as CarbonEdit,
+  Notification as CarbonNotification,
+  Upload as CarbonUpload,
+  Clean as CarbonClean,
+  Grid as CarbonGrid,
+  Select_02 as CarbonSelect,
 } from "@carbon/icons-react"
 
 // Export icons with automatic fallback
@@ -58,6 +66,7 @@ export const TrashCan = createIcon(CarbonTrashCan, "TrashCan")
 export const Reset = createIcon(CarbonReset, "Reset")
 export const ChevronDown = createIcon(CarbonChevronDown, "ChevronDown")
 export const ChevronUp = createIcon(CarbonChevronUp, "ChevronUp")
+export const CaretDown = createIcon(CarbonCaretDown, "CaretDown")
 export const Printer = createIcon(CarbonPrinter, "Printer")
 export const Package = createIcon(CarbonPackage, "Package")
 export const Settings = createIcon(CarbonSettings, "Settings")
@@ -66,3 +75,10 @@ export const Time = createIcon(CarbonTime, "Time")
 export const OverflowMenuVertical = createIcon(CarbonOverflowMenuVertical, "OverflowMenuVertical")
 export const View = createIcon(CarbonView, "View")
 export const ViewOff = createIcon(CarbonViewOff, "ViewOff")
+export const Folder = createIcon(CarbonFolder, "Folder")
+export const Edit = createIcon(CarbonEdit, "Edit")
+export const Notification = createIcon(CarbonNotification, "Notification")
+export const CloudUpload = createIcon(CarbonUpload, "CloudUpload")
+export const Clean = createIcon(CarbonClean, "Clean")
+export const Grid = createIcon(CarbonGrid, "Grid")
+export const Select = createIcon(CarbonSelect, "Select")

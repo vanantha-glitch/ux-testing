@@ -1,6 +1,7 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
+import * as THREE from "three"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
@@ -20,6 +21,10 @@ import { Slider } from "@/components/ui/slider"
 import { Input } from "@/components/ui/input"
 import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
+import {
+  RadioGroup,
+  RadioGroupItem,
+} from "@/components/ui/radio-group"
 import {
   InputGroup,
   InputGroupAddon,
@@ -47,7 +52,7 @@ import {
   ItemTitle,
 } from "@/components/ui/item"
 
-export default function RightPanelProduction() {
+export default function RightPanelBehaviorV3() {
   const [activeTab, setActiveTab] = useState("prepare")
   const [profileOpen, setProfileOpen] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
@@ -61,7 +66,17 @@ export default function RightPanelProduction() {
   const [showScrollIndicator, setShowScrollIndicator] = useState(false)
   const [hoveredItem, setHoveredItem] = useState<string | null>(null)
   const [selectedExtruder, setSelectedExtruder] = useState<"1" | "2">("1")
-  const [hoveredExtruder, setHoveredExtruder] = useState<string | null>(null)
+  const [focusedItem, setFocusedItem] = useState<string | null>(null)
+  
+  // Three.js refs
+  const canvasRef = useRef<HTMLCanvasElement>(null)
+  const sceneRef = useRef<THREE.Scene | null>(null)
+  const rendererRef = useRef<THREE.WebGLRenderer | null>(null)
+  const cameraRef = useRef<THREE.PerspectiveCamera | null>(null)
+  const raycasterRef = useRef<THREE.Raycaster | null>(null)
+  const pointsRef = useRef<THREE.Points | null>(null)
+  const mouseRef = useRef<THREE.Vector2>(new THREE.Vector2())
+  const animationFrameRef = useRef<number | null>(null)
 
   // Reset collapsible states when switching tabs
   useEffect(() => {
@@ -88,10 +103,209 @@ export default function RightPanelProduction() {
     return () => resizeObserver.disconnect()
   }, [settingsContentRef, settingsOpen])
 
+  // Initialize Three.js scene with interactive points
+  useEffect(() => {
+    if (!canvasRef.current) return
+
+    const canvas = canvasRef.current
+    const width = canvas.clientWidth
+    const height = canvas.clientHeight
+
+    // Scene setup
+    const scene = new THREE.Scene()
+    scene.background = new THREE.Color(0xffffff)
+    sceneRef.current = scene
+
+    // Camera setup
+    const camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 1000)
+    camera.position.z = 1000
+    cameraRef.current = camera
+
+    // Renderer setup
+    const renderer = new THREE.WebGLRenderer({ 
+      canvas, 
+      antialias: true,
+      alpha: true 
+    })
+    renderer.setSize(width, height)
+    renderer.setPixelRatio(window.devicePixelRatio)
+    rendererRef.current = renderer
+
+    // Raycaster setup
+    const raycaster = new THREE.Raycaster()
+    raycasterRef.current = raycaster
+
+    // Create points geometry
+    const particles = 5000
+    const geometry = new THREE.BufferGeometry()
+    const positions = new Float32Array(particles * 3)
+    const colors = new Float32Array(particles * 3)
+    const sizes = new Float32Array(particles)
+
+    const color = new THREE.Color()
+
+    for (let i = 0; i < particles; i++) {
+      const i3 = i * 3
+
+      // Positions
+      positions[i3] = (Math.random() - 0.5) * 2000
+      positions[i3 + 1] = (Math.random() - 0.5) * 2000
+      positions[i3 + 2] = (Math.random() - 0.5) * 2000
+
+      // Colors
+      color.setHSL(0.6, 0.5, 0.5)
+      colors[i3] = color.r
+      colors[i3 + 1] = color.g
+      colors[i3 + 2] = color.b
+
+      // Sizes
+      sizes[i] = 20
+    }
+
+    geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3))
+    geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3))
+    geometry.setAttribute('size', new THREE.BufferAttribute(sizes, 1))
+
+    // Material
+    const material = new THREE.PointsMaterial({
+      size: 20,
+      vertexColors: true,
+      transparent: true,
+      opacity: 0.6,
+    })
+
+    // Points
+    const points = new THREE.Points(geometry, material)
+    scene.add(points)
+    pointsRef.current = points
+
+    // Mouse move handler - listen on the parent container
+    const container = canvas.parentElement
+    const handleMouseMove = (event: MouseEvent) => {
+      if (!container) return
+      const rect = container.getBoundingClientRect()
+      mouseRef.current.x = ((event.clientX - rect.left) / rect.width) * 2 - 1
+      mouseRef.current.y = -((event.clientY - rect.top) / rect.height) * 2 + 1
+    }
+
+    if (container) {
+      container.addEventListener('mousemove', handleMouseMove)
+    }
+
+    // Animation loop
+    const animate = () => {
+      animationFrameRef.current = requestAnimationFrame(animate)
+
+      // Rotate points
+      points.rotation.x += 0.001
+      points.rotation.y += 0.002
+
+      // Update raycaster
+      raycaster.setFromCamera(mouseRef.current, camera)
+
+      // Get intersections
+      const intersects = raycaster.intersectObject(points)
+
+      // Reset all point sizes and colors
+      const positions = geometry.attributes.position.array as Float32Array
+      const colors = geometry.attributes.color.array as Float32Array
+      const sizes = geometry.attributes.size.array as Float32Array
+
+      for (let i = 0; i < particles; i++) {
+        const i3 = i * 3
+        sizes[i] = 20
+        color.setHSL(0.6, 0.5, 0.5)
+        colors[i3] = color.r
+        colors[i3 + 1] = color.g
+        colors[i3 + 2] = color.b
+      }
+
+      // Highlight intersected points
+      if (intersects.length > 0) {
+        const intersection = intersects[0]
+        const index = intersection.index
+
+        if (index !== undefined) {
+          const i3 = index * 3
+          sizes[index] = 100
+          color.setHSL(0.1, 1.0, 0.5)
+          colors[i3] = color.r
+          colors[i3 + 1] = color.g
+          colors[i3 + 2] = color.b
+
+          // Also highlight nearby points
+          const threshold = 50
+          for (let i = 0; i < particles; i++) {
+            if (i === index) continue
+            const i3 = i * 3
+            const dx = positions[i3] - positions[index * 3]
+            const dy = positions[i3 + 1] - positions[index * 3 + 1]
+            const dz = positions[i3 + 2] - positions[index * 3 + 2]
+            const distance = Math.sqrt(dx * dx + dy * dy + dz * dz)
+
+            if (distance < threshold) {
+              const factor = 1 - distance / threshold
+              sizes[i] = 20 + factor * 60
+              color.setHSL(0.1 + factor * 0.1, 1.0, 0.5)
+              colors[i3] = color.r
+              colors[i3 + 1] = color.g
+              colors[i3 + 2] = color.b
+            }
+          }
+        }
+      }
+
+      // Update attributes
+      geometry.attributes.size.needsUpdate = true
+      geometry.attributes.color.needsUpdate = true
+
+      renderer.render(scene, camera)
+    }
+
+    animate()
+
+    // Handle resize
+    const handleResize = () => {
+      const width = canvas.clientWidth
+      const height = canvas.clientHeight
+      camera.aspect = width / height
+      camera.updateProjectionMatrix()
+      renderer.setSize(width, height)
+    }
+
+    window.addEventListener('resize', handleResize)
+
+    // Cleanup
+    return () => {
+      if (container) {
+        container.removeEventListener('mousemove', handleMouseMove)
+      }
+      window.removeEventListener('resize', handleResize)
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current)
+      }
+      renderer.dispose()
+      geometry.dispose()
+      material.dispose()
+    }
+  }, [])
+
+  // Handle keyboard navigation
+  const handleKeyDown = (e: React.KeyboardEvent, itemId: string) => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault()
+      setFocusedItem(itemId)
+      // Here you could trigger an action like opening a dialog or menu
+    } else if (e.key === "Tab") {
+      // Let Tab work normally for navigation
+      // Focus will be handled by onFocus/onBlur
+    }
+  }
+
   return (
     <div 
       data-right-panel
-      className="!inline-block" 
+      className="!inline-block relative" 
       style={{ 
         width: '240px', 
         maxWidth: '240px', 
@@ -101,8 +315,18 @@ export default function RightPanelProduction() {
         boxSizing: 'border-box'
       }}
     >
+      {/* Three.js Canvas Background */}
+      <canvas
+        ref={canvasRef}
+        className="absolute inset-0 w-full h-full pointer-events-none opacity-20 z-0"
+        style={{ 
+          width: '240px',
+          height: '896px',
+        }}
+      />
+      
       <div 
-        className="w-[240px] max-w-[240px] min-w-[240px] flex-shrink-0 flex-grow-0 bg-white rounded-lg shadow-sm flex flex-col h-[896px]" 
+        className="w-[240px] max-w-[240px] min-w-[240px] flex-shrink-0 flex-grow-0 bg-white rounded-lg shadow-sm flex flex-col h-[896px] relative z-10" 
         style={{ 
           width: '240px', 
           maxWidth: '240px', 
@@ -115,7 +339,7 @@ export default function RightPanelProduction() {
           boxSizing: 'border-box'
         }}
       >
-      <Tabs value={activeTab} onValueChange={setActiveTab} defaultValue="prepare" className="flex flex-col h-full w-full gap-4">
+      <Tabs value={activeTab} onValueChange={setActiveTab} defaultValue="prepare" className="flex flex-col h-full w-full">
         {/* Tabs Header */}
         <div className="w-full h-[42px] bg-background rounded-none p-0 relative" style={{ borderBottom: '1px solid #EAEAEA' }}>
           <TabsList className="inline-flex items-center text-muted-foreground w-full h-full bg-transparent rounded-none border-0 p-0 justify-start">
@@ -141,7 +365,11 @@ export default function RightPanelProduction() {
         </div>
 
         {/* Prepare Tab Content */}
-        <TabsContent value="prepare" className="flex-1 flex flex-col m-0 p-0 overflow-hidden">
+        <TabsContent 
+          value="prepare" 
+          className="flex-1 flex flex-col m-0 p-0 overflow-hidden !focus-visible:ring-0 !focus-visible:ring-offset-0 !focus-visible:outline-none"
+          tabIndex={-1}
+        >
           {/* Settings Container - fills space */}
           <div className="flex-1 flex flex-col w-full min-w-0 min-h-0">
             {/* Printer Configuration Section - PanelSectionShell */}
@@ -154,8 +382,22 @@ export default function RightPanelProduction() {
                   {/* Printer Type */}
                   <Item 
                     size="sm" 
-                    className="h-10 cursor-pointer transition-colors"
-                    style={{ backgroundColor: hoveredItem === 'printer' ? '#F8F8F8' : 'transparent' }}
+                    tabIndex={0}
+                    role="button"
+                    aria-label="Printer Type"
+                    className={`h-10 cursor-pointer transition-all ${
+                      focusedItem === 'printer' 
+                        ? 'ring-2 ring-[#0C08B2] ring-offset-1' 
+                        : ''
+                    }`}
+                    style={{ 
+                      backgroundColor: hoveredItem === 'printer' ? '#F8F8F8' : 'transparent',
+                      outline: 'none'
+                    }}
+                    onClick={() => setFocusedItem('printer')}
+                    onFocus={() => setFocusedItem('printer')}
+                    onBlur={() => setFocusedItem(null)}
+                    onKeyDown={(e) => handleKeyDown(e, 'printer')}
                     onMouseEnter={() => setHoveredItem('printer')}
                     onMouseLeave={() => setHoveredItem(null)}
                   >
@@ -170,8 +412,22 @@ export default function RightPanelProduction() {
                   {/* Material Type 1 */}
                   <Item 
                     size="sm" 
-                    className="min-h-[52px] cursor-pointer transition-colors"
-                    style={{ backgroundColor: hoveredItem === 'material1' ? '#F8F8F8' : 'transparent' }}
+                    tabIndex={0}
+                    role="button"
+                    aria-label="Material Type 1"
+                    className={`min-h-[52px] cursor-pointer transition-all ${
+                      focusedItem === 'material1' 
+                        ? 'ring-2 ring-[#0C08B2] ring-offset-1' 
+                        : ''
+                    }`}
+                    style={{ 
+                      backgroundColor: hoveredItem === 'material1' ? '#F8F8F8' : 'transparent',
+                      outline: 'none'
+                    }}
+                    onClick={() => setFocusedItem('material1')}
+                    onFocus={() => setFocusedItem('material1')}
+                    onBlur={() => setFocusedItem(null)}
+                    onKeyDown={(e) => handleKeyDown(e, 'material1')}
                     onMouseEnter={() => setHoveredItem('material1')}
                     onMouseLeave={() => setHoveredItem(null)}
                   >
@@ -190,8 +446,22 @@ export default function RightPanelProduction() {
                   {/* Material Type 2 */}
                   <Item 
                     size="sm" 
-                    className="min-h-[52px] cursor-pointer transition-colors"
-                    style={{ backgroundColor: hoveredItem === 'material2' ? '#F8F8F8' : 'transparent' }}
+                    tabIndex={0}
+                    role="button"
+                    aria-label="Material Type 2"
+                    className={`min-h-[52px] cursor-pointer transition-all ${
+                      focusedItem === 'material2' 
+                        ? 'ring-2 ring-[#0C08B2] ring-offset-1' 
+                        : ''
+                    }`}
+                    style={{ 
+                      backgroundColor: hoveredItem === 'material2' ? '#F8F8F8' : 'transparent',
+                      outline: 'none'
+                    }}
+                    onClick={() => setFocusedItem('material2')}
+                    onFocus={() => setFocusedItem('material2')}
+                    onBlur={() => setFocusedItem(null)}
+                    onKeyDown={(e) => handleKeyDown(e, 'material2')}
                     onMouseEnter={() => setHoveredItem('material2')}
                     onMouseLeave={() => setHoveredItem(null)}
                   >
@@ -252,22 +522,22 @@ export default function RightPanelProduction() {
                     {!settingsOpen && (
                       <div className="flex-1 flex flex-col min-h-0 px-2 py-2">
                         <div className="flex flex-col gap-2 flex-shrink-0">
-                          {/* Row 1: Resolution and Infill */}
-                          <div className="flex items-center gap-2">
-                            <div className="flex items-center gap-2 flex-1">
-                              <UltimakerIcon name="UltiMaker_PrintQuality" size={16} className="text-muted-foreground flex-shrink-0" />
-                              <span className="text-xs text-[#282828]">{resolutionValue === "0.15" ? "0.15 mm" : resolutionValue === "0.20" ? "0.20 mm" : resolutionValue === "0.25" ? "0.25 mm" : resolutionValue}</span>
-                            </div>
-                            <div className="flex items-center gap-2 flex-1">
-                              <UltimakerIcon name="Ultimaker-infill-1" size={16} className="text-muted-foreground flex-shrink-0" />
-                              <span className="text-xs text-[#282828]">{infillValue[0]} %</span>
-                            </div>
-                          </div>
-                          {/* Row 2: Support and Adhesion */}
+                          {/* Row 1: Support and Resolution */}
                           <div className="flex items-center gap-2">
                             <div className="flex items-center gap-2 flex-1">
                               <UltimakerIcon name="Ultimaker-Support" size={16} className="text-muted-foreground flex-shrink-0" />
                               <span className="text-xs text-[#282828] min-w-[24px]">{supportEnabled ? "On" : "Off"}</span>
+                            </div>
+                            <div className="flex items-center gap-2 flex-1">
+                              <UltimakerIcon name="UltiMaker_PrintQuality" size={16} className="text-muted-foreground flex-shrink-0" />
+                              <span className="text-xs text-[#282828]">{resolutionValue === "0.15" ? "0.15 mm" : resolutionValue === "0.20" ? "0.20 mm" : resolutionValue === "0.25" ? "0.25 mm" : resolutionValue}</span>
+                            </div>
+                          </div>
+                          {/* Row 2: Infill and Adhesion */}
+                          <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-2 flex-1">
+                              <UltimakerIcon name="Ultimaker-infill-1" size={16} className="text-muted-foreground flex-shrink-0" />
+                              <span className="text-xs text-[#282828]">{infillValue[0]} %</span>
                             </div>
                             <div className="flex items-center gap-2 flex-1">
                               <UltimakerIcon name="Ultimaker-Adhesion" size={16} className="text-muted-foreground flex-shrink-0" />
@@ -285,14 +555,96 @@ export default function RightPanelProduction() {
                           className="w-full min-w-0 max-w-[224px] px-2 py-2 space-y-2"
                           style={{ scrollbarWidth: 'thin', boxSizing: 'border-box', width: '100%', maxWidth: '224px' }}
                         >
+                          {/* Support Toggle - Now at the top */}
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2 flex-1 min-w-0">
+                              <UltimakerIcon name="Ultimaker-Support" size={16} className="text-muted-foreground flex-shrink-0" />
+                              <Label className="text-xs font-normal text-[#282828] flex-shrink-0">Support</Label>
+                            </div>
+                            <div className="flex items-center gap-2 flex-shrink-0">
+                              <div className="w-5 h-5 flex items-center justify-center flex-shrink-0">
+                                {supportEnabled && (
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation()
+                                      setSupportEnabled(false)
+                                    }}
+                                    className="p-0.5 hover:bg-muted/50 rounded"
+                                    aria-label="Reset support"
+                                  >
+                                    <Reset size={12} className="text-muted-foreground" />
+                                  </button>
+                                )}
+                              </div>
+                              <Switch
+                                checked={supportEnabled}
+                                onCheckedChange={setSupportEnabled}
+                                className="h-4 w-8 flex-shrink-0"
+                              />
+                            </div>
+                          </div>
+
+                          {/* Additional fields when support is enabled */}
+                          {supportEnabled && (
+                            <>
+                              {/* Extruder Selection */}
+                              <div className="space-y-1">
+                                <RadioGroup 
+                                  value={selectedExtruder} 
+                                  onValueChange={(value) => setSelectedExtruder(value as "1" | "2")}
+                                  className="flex flex-col gap-1"
+                                >
+                                  <div className="flex items-center gap-2 px-2 py-2 rounded transition-colors">
+                                    <RadioGroupItem value="1" id="extruder-1-behavior-v3" />
+                                    <Label htmlFor="extruder-1-behavior-v3" className="text-xs text-[#282828] cursor-pointer">
+                                      Extruder 1
+                                    </Label>
+                                  </div>
+                                  <div className="flex items-center gap-2 px-2 py-2 rounded transition-colors">
+                                    <RadioGroupItem value="2" id="extruder-2-behavior-v3" />
+                                    <Label htmlFor="extruder-2-behavior-v3" className="text-xs text-[#282828] cursor-pointer">
+                                      Extruder 2
+                                    </Label>
+                                  </div>
+                                </RadioGroup>
+                              </div>
+
+                              {/* Type Dropdown */}
+                              <div className="flex flex-col gap-2">
+                                <Label id="support-type-label-behavior-v3" htmlFor="support-type-select-behavior-v3" className="text-xs font-normal text-[#282828]">Type</Label>
+                                <Select defaultValue="option">
+                                  <SelectTrigger id="support-type-select-behavior-v3" className="h-8 text-xs border-[#EAEAEA]" aria-labelledby="support-type-label-behavior-v3">
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="option">Option</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+
+                              {/* Placement Dropdown */}
+                              <div className="flex flex-col gap-2">
+                                <Label id="support-placement-label-behavior-v3" htmlFor="support-placement-select-behavior-v3" className="text-xs font-normal text-[#282828]">Placement</Label>
+                                <Select defaultValue="option">
+                                  <SelectTrigger id="support-placement-select-behavior-v3" className="h-8 text-xs border-[#EAEAEA]" aria-labelledby="support-placement-label-behavior-v3">
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="option">Option</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                            </>
+                          )}
+
                           {/* Resolution Dropdown */}
                           <div className="flex flex-col gap-2">
                             <div className="flex items-center gap-2">
                               <UltimakerIcon name="UltiMaker_PrintQuality" size={16} className="text-muted-foreground" />
-                              <Label id="resolution-label" htmlFor="resolution-select" className="text-xs font-normal text-[#282828]">Resolution</Label>
+                              <Label id="resolution-label-behavior-v3" htmlFor="resolution-select-behavior-v3" className="text-xs font-normal text-[#282828]">Resolution</Label>
                             </div>
                             <Select value={resolutionValue} onValueChange={setResolutionValue}>
-                              <SelectTrigger id="resolution-select" className="h-8 text-xs border-[#EAEAEA]" aria-labelledby="resolution-label">
+                              <SelectTrigger id="resolution-select-behavior-v3" className="h-8 text-xs border-[#EAEAEA]" aria-labelledby="resolution-label-behavior-v3">
                                 <SelectValue />
                               </SelectTrigger>
                               <SelectContent>
@@ -379,10 +731,10 @@ export default function RightPanelProduction() {
                           <div className="flex flex-col gap-2">
                             <div className="flex items-center gap-2">
                               <UltimakerIcon name="Ultimaker-infill-2" size={16} className="text-muted-foreground" />
-                              <Label id="infill-pattern-label" htmlFor="infill-pattern-select" className="text-xs font-normal text-[#282828]">Infill Pattern</Label>
+                              <Label id="infill-pattern-label-behavior-v3" htmlFor="infill-pattern-select-behavior-v3" className="text-xs font-normal text-[#282828]">Infill Pattern</Label>
                             </div>
                             <Select defaultValue="option">
-                              <SelectTrigger id="infill-pattern-select" className="h-8 text-xs border-[#EAEAEA]" aria-labelledby="infill-pattern-label">
+                              <SelectTrigger id="infill-pattern-select-behavior-v3" className="h-8 text-xs border-[#EAEAEA]" aria-labelledby="infill-pattern-label-behavior-v3">
                                 <SelectValue />
                               </SelectTrigger>
                               <SelectContent>
@@ -394,114 +746,14 @@ export default function RightPanelProduction() {
                             </Select>
                           </div>
 
-                          {/* Support Toggle */}
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2 flex-1 min-w-0">
-                              <UltimakerIcon name="Ultimaker-Support" size={16} className="text-muted-foreground flex-shrink-0" />
-                              <Label className="text-xs font-normal text-[#282828] flex-shrink-0">Support</Label>
-                            </div>
-                            <div className="flex items-center gap-2 flex-shrink-0">
-                              <div className="w-5 h-5 flex items-center justify-center flex-shrink-0">
-                                {supportEnabled && (
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation()
-                                      setSupportEnabled(false)
-                                    }}
-                                    className="p-0.5 hover:bg-muted/50 rounded"
-                                    aria-label="Reset support"
-                                  >
-                                    <Reset size={12} className="text-muted-foreground" />
-                                  </button>
-                                )}
-                              </div>
-                              <Switch
-                                checked={supportEnabled}
-                                onCheckedChange={setSupportEnabled}
-                                className="h-4 w-8 flex-shrink-0"
-                              />
-                            </div>
-                          </div>
-
-                          {/* Additional fields when support is enabled */}
-                          {supportEnabled && (
-                            <>
-                              {/* Type Dropdown */}
-                              <div className="flex flex-col gap-2">
-                                <Label id="support-type-label" htmlFor="support-type-select" className="text-xs font-normal text-[#282828]">Type</Label>
-                                <Select defaultValue="option">
-                                  <SelectTrigger id="support-type-select" className="h-8 text-xs border-[#EAEAEA]" aria-labelledby="support-type-label">
-                                    <SelectValue />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    <SelectItem value="option">Option</SelectItem>
-                                  </SelectContent>
-                                </Select>
-                              </div>
-
-                              {/* Extruder Selection */}
-                              <div className="space-y-1">
-                                <div className="flex flex-col gap-1">
-                                  <button
-                                    type="button"
-                                    onClick={() => setSelectedExtruder("1")}
-                                    onMouseEnter={() => setHoveredExtruder("1")}
-                                    onMouseLeave={() => setHoveredExtruder(null)}
-                                    className="flex items-center gap-2 px-2 py-2 rounded transition-colors cursor-pointer"
-                                    style={{ 
-                                      backgroundColor: selectedExtruder === "1" 
-                                        ? "#E7E7FD" 
-                                        : hoveredExtruder === "1" 
-                                          ? "#F8F8F8" 
-                                          : "transparent" 
-                                    }}
-                                  >
-                                    <UltimakerIcon name="Ultimaker-material-1" size={16} className="text-muted-foreground flex-shrink-0" />
-                                    <span className="text-xs text-[#282828]">Extruder 1</span>
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={() => setSelectedExtruder("2")}
-                                    onMouseEnter={() => setHoveredExtruder("2")}
-                                    onMouseLeave={() => setHoveredExtruder(null)}
-                                    className="flex items-center gap-2 px-2 py-2 rounded transition-colors cursor-pointer"
-                                    style={{ 
-                                      backgroundColor: selectedExtruder === "2" 
-                                        ? "#E7E7FD" 
-                                        : hoveredExtruder === "2" 
-                                          ? "#F8F8F8" 
-                                          : "transparent" 
-                                    }}
-                                  >
-                                    <UltimakerIcon name="Ultimaker-material-2" size={16} className="text-muted-foreground flex-shrink-0" />
-                                    <span className="text-xs text-[#282828]">Extruder 2</span>
-                                  </button>
-                                </div>
-                              </div>
-
-                              {/* Placement Dropdown */}
-                              <div className="flex flex-col gap-2">
-                                <Label id="support-placement-label" htmlFor="support-placement-select" className="text-xs font-normal text-[#282828]">Placement</Label>
-                                <Select defaultValue="option">
-                                  <SelectTrigger id="support-placement-select" className="h-8 text-xs border-[#EAEAEA]" aria-labelledby="support-placement-label">
-                                    <SelectValue />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    <SelectItem value="option">Option</SelectItem>
-                                  </SelectContent>
-                                </Select>
-                              </div>
-                            </>
-                          )}
-
                           {/* Adhesion Dropdown */}
                           <div className="flex flex-col gap-2">
                             <div className="flex items-center gap-2">
                               <UltimakerIcon name="Ultimaker-Adhesion" size={16} className="text-muted-foreground" />
-                              <Label id="adhesion-label" htmlFor="adhesion-select" className="text-xs font-normal text-[#282828]">Adhesion</Label>
+                              <Label id="adhesion-label-behavior-v3" htmlFor="adhesion-select-behavior-v3" className="text-xs font-normal text-[#282828]">Adhesion</Label>
                             </div>
                             <Select value={adhesionValue} onValueChange={setAdhesionValue}>
-                              <SelectTrigger id="adhesion-select" className="h-8 text-xs border-[#EAEAEA]" aria-labelledby="adhesion-label">
+                              <SelectTrigger id="adhesion-select-behavior-v3" className="h-8 text-xs border-[#EAEAEA]" aria-labelledby="adhesion-label-behavior-v3">
                                 <SelectValue />
                               </SelectTrigger>
                               <SelectContent>

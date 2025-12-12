@@ -27,6 +27,10 @@ export const carbonToUltimakerIconMap: Record<string, string> = {
   // Menu icons
   OverflowMenuVertical: "Ultimaker-Expand.svg", // Using expand as menu alternative
   
+  // Upload and Library icons
+  // CloudUpload uses Carbon's Upload icon directly (no Ultimaker fallback)
+  "Media--library2": "Media--library2.svg",
+  
   // Figma-specific Ultimaker icons (for direct use in components)
   // These match the Figma component names exactly
   "UltiMaker_PrintQuality": "UltiMaker_PrintQuality.svg",

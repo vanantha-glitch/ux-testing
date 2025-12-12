@@ -73,19 +73,25 @@ export default function RightPanelV1() {
         boxSizing: 'border-box'
       }}
     >
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="flex flex-col h-full">
+      <Tabs value={activeTab} onValueChange={setActiveTab} defaultValue="prepare" className="flex flex-col h-full">
         {/* Tabs Header */}
-        <div className="px-2">
-          <TabsList className="w-full justify-start bg-transparent h-auto p-0 gap-0">
+        <div className="w-full h-[42px] bg-background rounded-none p-0 relative" style={{ borderBottom: '1px solid #EAEAEA' }}>
+          <TabsList className="inline-flex items-center text-muted-foreground w-full h-full bg-transparent rounded-none border-0 p-0 justify-start">
             <TabsTrigger
               value="prepare"
-              className="px-2 py-3 rounded-none border-b-2 border-transparent data-[state=active]:border-[#0C08B2] data-[state=active]:bg-transparent data-[state=active]:text-[#282828] text-xs"
+              className="rounded-none border-0 bg-transparent px-2 py-3 text-xs font-normal text-[#707070] shadow-none h-full relative border-b-[3px] border-transparent data-[state=active]:border-[#0C08B2] data-[state=active]:bg-transparent data-[state=active]:text-[#282828] data-[state=active]:font-medium data-[state=active]:shadow-none"
+              style={{
+                marginBottom: '-1px'
+              }}
             >
               Prepare
             </TabsTrigger>
             <TabsTrigger
               value="preview"
-              className="px-2 py-3 rounded-none border-b-2 border-transparent data-[state=active]:border-[#0C08B2] data-[state=active]:bg-transparent data-[state=active]:text-[#282828] text-xs text-[#707070]"
+              className="rounded-none border-0 bg-transparent px-2 py-3 text-xs font-normal text-[#707070] shadow-none h-full relative border-b-[3px] border-transparent data-[state=active]:border-[#0C08B2] data-[state=active]:bg-transparent data-[state=active]:text-[#282828] data-[state=active]:font-medium data-[state=active]:shadow-none"
+              style={{
+                marginBottom: '-1px'
+              }}
             >
               Preview
             </TabsTrigger>

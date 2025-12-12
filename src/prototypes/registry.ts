@@ -1,5 +1,6 @@
 import { ComponentType } from "react"
 import ExampleContactForm from "./example-contact-form"
+import AdjustmentTools from "./components/adjustment-tools"
 
 export interface Variation {
   id: string
@@ -41,12 +42,17 @@ export const prototypes: Prototype[] = [
     name: "Right Panel",
     description: "Right panel component rebuilt from Figma design",
     hasVariations: true,
-    variations: ["production", "support.v2"],
+    variations: ["production", "support.v2", "behavior.v2", "behavior.v3"],
     branches: [
       {
         id: "communicating-support",
         name: "Communicating Support",
         variations: ["support.v2"], // Production is always included, so we only list non-production variations
+      },
+      {
+        id: "behavior-explorations",
+        name: "Behavior Explorations",
+        variations: ["behavior.v2", "behavior.v3"], // Production is always included, so we only list non-production variations
       },
     ],
     variationDetails: {
@@ -58,6 +64,16 @@ export const prototypes: Prototype[] = [
         id: "support.v2",
         branch: "communicating-support",
         description: "Moved support toggle to top of settings section and changed extruder selection from buttons to radio group",
+      },
+      "behavior.v2": {
+        id: "behavior.v2",
+        branch: "behavior-explorations",
+        description: "Added focus functionality to Printer Type and Material Type items with keyboard navigation support",
+      },
+      "behavior.v3": {
+        id: "behavior.v3",
+        branch: "behavior-explorations",
+        description: "Added Three.js interactive raycasting points visualization that reacts to mouse movement",
       },
     },
   },
@@ -96,6 +112,26 @@ export const prototypes: Prototype[] = [
         validation: "Minimum 10 characters",
       },
     ],
+  },
+  {
+    id: "top-bar",
+    name: "Top Bar",
+    description: "Top bar component with toolbar, filename editing, and notifications",
+    hasVariations: true,
+    variations: ["production"],
+    variationDetails: {
+      production: {
+        id: "production",
+        description: "Production version - source of truth",
+      },
+    },
+  },
+  {
+    id: "adjustment-tools",
+    name: "Adjustment Tools",
+    description: "Model adjustment toolbar with Move, Scale, Rotate, and Multiply tools",
+    component: AdjustmentTools,
+    hasVariations: false,
   },
 ]
 
@@ -137,6 +173,34 @@ export function getVariationsForBranch(componentId: string, branchId: string | n
 export function getVariationDescription(componentId: string, variationId: string): string | undefined {
   const prototype = getPrototype(componentId)
   return prototype?.variationDetails?.[variationId]?.description
+}
+
+/**
+ * Generate a URL path to a specific prototype variant
+ * @param prototypeId The ID of the prototype
+ * @param variationId The ID of the variation (defaults to "production")
+ * @returns URL path with hash for variation (e.g., "/prototypes/right-panel#support.v2")
+ */
+export function getPrototypeVariantUrl(prototypeId: string, variationId: string = "production"): string {
+  const baseUrl = `/prototypes/${prototypeId}`
+  if (variationId === "production") {
+    return baseUrl
+  }
+  return `${baseUrl}#${variationId}`
+}
+
+/**
+ * Check if a variation exists for a prototype
+ * @param prototypeId The ID of the prototype
+ * @param variationId The ID of the variation to check
+ * @returns true if the variation exists
+ */
+export function hasVariation(prototypeId: string, variationId: string): boolean {
+  const prototype = getPrototype(prototypeId)
+  if (!prototype?.hasVariations) {
+    return variationId === "production" && prototype !== undefined
+  }
+  return prototype.variations?.includes(variationId) ?? false
 }
 
 // Re-export loaders from component-loader

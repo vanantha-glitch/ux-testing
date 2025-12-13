@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
@@ -62,6 +62,7 @@ export default function RightPanelProduction() {
   const [hoveredItem, setHoveredItem] = useState<string | null>(null)
   const [selectedExtruder, setSelectedExtruder] = useState<"1" | "2">("1")
   const [hoveredExtruder, setHoveredExtruder] = useState<string | null>(null)
+  const printerTypeRef = useRef<HTMLDivElement>(null)
 
   // Reset collapsible states when switching tabs
   useEffect(() => {
@@ -87,6 +88,25 @@ export default function RightPanelProduction() {
 
     return () => resizeObserver.disconnect()
   }, [settingsContentRef, settingsOpen])
+
+  // Listen for upload file selection event and focus printer type
+  useEffect(() => {
+    const handleUploadFileSelected = () => {
+      // Use setTimeout to ensure the DOM has updated after state change
+      setTimeout(() => {
+        if (printerTypeRef.current) {
+          printerTypeRef.current.focus()
+          // Scroll into view if needed
+          printerTypeRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+        }
+      }, 100)
+    }
+
+    window.addEventListener('upload-file-selected', handleUploadFileSelected)
+    return () => {
+      window.removeEventListener('upload-file-selected', handleUploadFileSelected)
+    }
+  }, [])
 
   return (
     <div 
@@ -115,24 +135,40 @@ export default function RightPanelProduction() {
           boxSizing: 'border-box'
         }}
       >
-      <Tabs value={activeTab} onValueChange={setActiveTab} defaultValue="prepare" className="flex flex-col h-full w-full gap-4">
+      <Tabs value={activeTab} onValueChange={setActiveTab} defaultValue="prepare" className="flex flex-col h-full w-full gap-4 rounded-lg" style={{ borderRadius: '8px' }}>
         {/* Tabs Header */}
-        <div className="w-full h-[42px] bg-background rounded-none p-0 relative" style={{ borderBottom: '1px solid #EAEAEA' }}>
-          <TabsList className="inline-flex items-center text-muted-foreground w-full h-full bg-transparent rounded-none border-0 p-0 justify-start">
+        <div className="w-full h-[42px] bg-background rounded-t-lg p-0" style={{ borderBottom: '1px solid #EAEAEA' }}>
+          <TabsList className="bg-background rounded-none border-b p-0 h-full w-full inline-flex items-center justify-start">
             <TabsTrigger
               value="prepare"
-              className="rounded-none border-0 bg-transparent px-2 py-3 text-xs font-normal text-[#707070] shadow-none h-full relative border-b-[3px] border-transparent data-[state=active]:border-[#0C08B2] data-[state=active]:bg-transparent data-[state=active]:text-[#282828] data-[state=active]:font-medium data-[state=active]:shadow-none"
+              className="bg-background data-[state=active]:text-[#282828] text-[#707070] hover:text-[#282828] hover:border-muted-foreground/30 h-full rounded-none border-0 border-b-[1px] border-transparent data-[state=active]:border-b-[1px] data-[state=active]:border-black data-[state=active]:shadow-none px-2 py-3 text-xs font-normal data-[state=active]:font-medium"
               style={{
-                marginBottom: '-1px'
+                marginBottom: '0px',
+                borderTopWidth: '0px',
+                borderRightWidth: '0px',
+                borderLeftWidth: '0px',
+                borderTopColor: 'rgba(0, 0, 0, 0)',
+                borderRightColor: 'rgba(0, 0, 0, 0)',
+                borderLeftColor: 'rgba(0, 0, 0, 0)',
+                borderStyle: 'solid',
+                borderImage: 'none'
               }}
             >
               Prepare
             </TabsTrigger>
             <TabsTrigger
               value="preview"
-              className="rounded-none border-0 bg-transparent px-2 py-3 text-xs font-normal text-[#707070] shadow-none h-full relative border-b-[3px] border-transparent data-[state=active]:border-[#0C08B2] data-[state=active]:bg-transparent data-[state=active]:text-[#282828] data-[state=active]:font-medium data-[state=active]:shadow-none"
+              className="bg-background data-[state=active]:text-[#282828] text-[#707070] hover:text-[#282828] hover:border-muted-foreground/30 h-full rounded-none border-0 border-b-[1px] border-transparent data-[state=active]:border-b-[1px] data-[state=active]:border-black data-[state=active]:shadow-none px-2 py-3 text-xs font-normal data-[state=active]:font-medium"
               style={{
-                marginBottom: '-1px'
+                marginBottom: '0px',
+                borderTopWidth: '0px',
+                borderRightWidth: '0px',
+                borderLeftWidth: '0px',
+                borderTopColor: 'rgba(0, 0, 0, 0)',
+                borderRightColor: 'rgba(0, 0, 0, 0)',
+                borderLeftColor: 'rgba(0, 0, 0, 0)',
+                borderStyle: 'solid',
+                borderImage: 'none'
               }}
             >
               Preview
@@ -153,11 +189,13 @@ export default function RightPanelProduction() {
                 <div className="space-y-1">
                   {/* Printer Type */}
                   <Item 
+                    ref={printerTypeRef}
                     size="sm" 
                     className="h-10 cursor-pointer transition-colors"
                     style={{ backgroundColor: hoveredItem === 'printer' ? '#F8F8F8' : 'transparent' }}
                     onMouseEnter={() => setHoveredItem('printer')}
                     onMouseLeave={() => setHoveredItem(null)}
+                    tabIndex={0}
                   >
                     <ItemMedia>
                       <Printer size={16} className="text-muted-foreground" />

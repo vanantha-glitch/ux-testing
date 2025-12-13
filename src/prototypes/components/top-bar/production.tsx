@@ -93,6 +93,8 @@ export default function TopBarProduction() {
                     className="gap-2 px-2 py-2 text-xs font-normal text-[#282828] rounded hover:bg-[#F2F4F8] focus:bg-[#F2F4F8] cursor-pointer flex items-center"
                     onSelect={() => {
                       setModelsOnBuildPlate(true)
+                      // Dispatch custom event to focus printer type
+                      window.dispatchEvent(new CustomEvent('upload-file-selected'))
                     }}
                   >
                     <CloudUpload size={16} className="text-[#282828] flex-shrink-0" />
@@ -181,6 +183,8 @@ export default function TopBarProduction() {
                     className="gap-2 px-2 py-2 text-xs font-normal text-[#282828] rounded hover:bg-[#F2F4F8] focus:bg-[#F2F4F8] cursor-pointer flex items-center"
                     onSelect={() => {
                       setModelsOnBuildPlate(true)
+                      // Dispatch custom event to focus printer type
+                      window.dispatchEvent(new CustomEvent('upload-file-selected'))
                     }}
                   >
                     <CloudUpload size={16} className="text-[#282828] flex-shrink-0" />

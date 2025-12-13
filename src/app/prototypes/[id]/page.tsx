@@ -4,6 +4,7 @@ import { useEffect, useState, Suspense } from "react"
 import { useParams, useRouter } from "next/navigation"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
+import { Label } from "@/components/ui/label"
 import { ArrowLeft, TrashCan, View, ViewOff } from "@/lib/icons"
 import {
   getPrototype,
@@ -35,9 +36,6 @@ import {
 } from "@/components/ui/select"
 import { ComponentType } from "react"
 import { Skeleton } from "@/components/ui/skeleton"
-import { Switch } from "@/components/ui/switch"
-import { Label } from "@/components/ui/label"
-import { ContextOverlay } from "@/components/context-overlay"
 
 function ComponentPageContent() {
   const params = useParams()
@@ -50,7 +48,6 @@ function ComponentPageContent() {
   const [activeTab, setActiveTab] = useState<string>("")
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [variationToDelete, setVariationToDelete] = useState<string | null>(null)
-  const [contextEnabled, setContextEnabled] = useState<Record<string, boolean>>({ default: true })
   const [selectedBranch, setSelectedBranch] = useState<string | null>(null)
   const [showDescription, setShowDescription] = useState<Record<string, boolean>>({})
   const [loadingErrors, setLoadingErrors] = useState<Record<string, string>>({})
@@ -62,17 +59,6 @@ function ComponentPageContent() {
       // Get variations for selected branch (or all if no branch selected)
       const active = getVariationsForBranch(id, selectedBranch)
       setActiveVariations(active)
-      
-      // Initialize context enabled state to true for all variations
-      setContextEnabled((prev) => {
-        const updated = { ...prev }
-        active.forEach((variationId) => {
-          if (!(variationId in updated)) {
-            updated[variationId] = true
-          }
-        })
-        return updated
-      })
       
       if (active.length > 0) {
         // Check for hash in URL to set initial tab
@@ -147,7 +133,7 @@ function ComponentPageContent() {
 
   if (!prototype) {
     return (
-      <div className="container mx-auto py-8 px-4">
+      <div className="container mx-auto py-8 px-4" style={{ backgroundColor: '#FAF8F6', minHeight: '100vh' }}>
         <div className="mb-6">
           <Link href="/prototypes">
             <Button variant="ghost" className="mb-4">
@@ -186,8 +172,9 @@ function ComponentPageContent() {
   // Legacy component (no variations)
   if (!prototype.hasVariations && prototype.component) {
     const Component = prototype.component
+    const isFullUI = id === "full-ui"
     return (
-      <div className="container mx-auto py-8 px-4">
+      <div className="container mx-auto py-8 px-4" style={{ backgroundColor: '#FAF8F6', minHeight: '100vh' }}>
         <div className="mb-6">
           <Link href="/prototypes">
             <Button variant="ghost" className="mb-4">
@@ -201,29 +188,14 @@ function ComponentPageContent() {
           </div>
         </div>
 
-        <div className="bg-card border rounded-lg flex flex-col" style={{ minHeight: '992px' }}>
+        <div className="bg-card border rounded-lg flex flex-col" style={{ minHeight: '992px', backgroundColor: isFullUI ? '#FAF8F6' : undefined }}>
           <div className="flex items-center justify-between p-6 pb-4 border-b flex-shrink-0">
             <h2 className="text-lg font-semibold">Preview</h2>
-            <div className="flex items-center gap-3">
-              <Label htmlFor="context-toggle" className="text-sm font-normal cursor-pointer">
-                View in context
-              </Label>
-              <Switch
-                id="context-toggle"
-                checked={contextEnabled["default"] ?? true}
-                onCheckedChange={(checked) => setContextEnabled({ ...contextEnabled, default: checked })}
-              />
-            </div>
           </div>
-          <div className="flex-1 overflow-hidden">
-            <ContextOverlay
-              enabled={contextEnabled["default"] ?? true}
-              onToggle={(enabled) => setContextEnabled({ ...contextEnabled, default: enabled })}
-            >
-              <div className="flex-1 overflow-y-auto">
-                <Component />
-              </div>
-            </ContextOverlay>
+          <div className="flex-1 overflow-hidden" style={{ backgroundColor: isFullUI ? '#FAF8F6' : undefined }}>
+            <div className="flex-1 overflow-y-auto" style={{ backgroundColor: isFullUI ? '#FAF8F6' : undefined }}>
+              <Component />
+            </div>
           </div>
         </div>
 
@@ -262,7 +234,7 @@ function ComponentPageContent() {
   const hasBranches = branches.length > 0
 
   return (
-    <div className="container mx-auto py-8 px-4">
+    <div className="container mx-auto py-8 px-4" style={{ backgroundColor: '#FAF8F6', minHeight: '100vh' }}>
       <div className="mb-6">
         <Link href="/prototypes">
           <Button variant="ghost" className="mb-4">
@@ -317,7 +289,7 @@ function ComponentPageContent() {
           
           return (
             <TabsContent key={variationId} value={variationId} className="mt-0">
-              <div className="bg-card border rounded-lg flex flex-col" style={{ minHeight: '992px' }}>
+              <div className="bg-card border rounded-lg flex flex-col" style={{ minHeight: '992px', backgroundColor: '#FAF8F6' }}>
                 <div className="flex flex-col p-6 pb-4 border-b flex-shrink-0 gap-3">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3 flex-1">
@@ -343,72 +315,55 @@ function ComponentPageContent() {
                         </>
                       )}
                     </div>
-                    <div className="flex items-center gap-3">
-                      <div className="flex items-center gap-3">
-                        <Label htmlFor={`context-toggle-${variationId}`} className="text-sm font-normal cursor-pointer">
-                          View in context
-                        </Label>
-                        <Switch
-                          id={`context-toggle-${variationId}`}
-                          checked={contextEnabled[variationId] ?? true}
-                          onCheckedChange={(checked) => setContextEnabled({ ...contextEnabled, [variationId]: checked })}
-                        />
-                      </div>
-                    </div>
                   </div>
                 </div>
-                <div className="flex-1 overflow-hidden">
-                  <ContextOverlay
-                    enabled={contextEnabled[variationId] ?? true}
-                    onToggle={(enabled) => setContextEnabled({ ...contextEnabled, [variationId]: enabled })}
-                  >
-                    <div className="flex-1 overflow-y-auto">
-                      {Component ? (
-                        <Component />
-                      ) : loadingErrors[variationId] ? (
-                        <div className="p-6 space-y-4">
-                          <div className="text-sm text-destructive font-medium">
-                            Failed to load component
-                          </div>
-                          <div className="text-sm text-muted-foreground">
-                            {loadingErrors[variationId]}
-                          </div>
-                          <Button
-                            variant="outline"
-                            onClick={() => {
-                              // Retry loading
-                              const loadComponent = async () => {
-                                try {
-                                  const Component = await loadVariation(id, variationId)
-                                  if (Component) {
-                                    setLoadedComponents((prev) => ({ ...prev, [variationId]: Component }))
-                                    setLoadingErrors((prev) => {
-                                      const updated = { ...prev }
-                                      delete updated[variationId]
-                                      return updated
-                                    })
-                                  }
-                                } catch (error) {
-                                  console.error(`Retry failed for ${variationId}:`, error)
+                <div className="flex-1 overflow-hidden" style={{ backgroundColor: '#FAF8F6' }}>
+                  <div className="flex-1 overflow-y-auto" style={{ backgroundColor: '#FAF8F6' }}>
+                    {Component ? (
+                      <Component />
+                    ) : loadingErrors[variationId] ? (
+                      <div className="p-6 space-y-4">
+                        <div className="text-sm text-destructive font-medium">
+                          Failed to load component
+                        </div>
+                        <div className="text-sm text-muted-foreground">
+                          {loadingErrors[variationId]}
+                        </div>
+                        <Button
+                          variant="outline"
+                          onClick={() => {
+                            // Retry loading
+                            const loadComponent = async () => {
+                              try {
+                                const Component = await loadVariation(id, variationId)
+                                if (Component) {
+                                  setLoadedComponents((prev) => ({ ...prev, [variationId]: Component }))
+                                  setLoadingErrors((prev) => {
+                                    const updated = { ...prev }
+                                    delete updated[variationId]
+                                    return updated
+                                  })
                                 }
+                              } catch (error) {
+                                console.error(`Retry failed for ${variationId}:`, error)
                               }
-                              loadComponent()
-                            }}
-                          >
-                            Retry
-                          </Button>
+                            }
+                            loadComponent()
+                          }}
+                        >
+                          Retry
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="p-6 space-y-4">
+                        <div className="text-sm text-muted-foreground">
+                          Loading component...
                         </div>
-                      ) : (
-                        <div className="p-6 space-y-4">
-                          <div className="text-sm text-muted-foreground">
-                            Loading component...
-                          </div>
-                          <Skeleton className="h-8 w-48" />
-                          <Skeleton className="h-64 w-full" />
-                        </div>
-                      )}
-                    </div>
-                  </ContextOverlay>
+                        <Skeleton className="h-8 w-48" />
+                        <Skeleton className="h-64 w-full" />
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             </TabsContent>

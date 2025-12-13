@@ -1,6 +1,7 @@
 import { ComponentType } from "react"
-import ExampleContactForm from "./example-contact-form"
 import AdjustmentTools from "./components/adjustment-tools"
+import FullUI from "./components/full-ui"
+import Viewport from "./components/viewport"
 
 export interface Variation {
   id: string
@@ -37,6 +38,13 @@ export interface FormFieldDescription {
 }
 
 export const prototypes: Prototype[] = [
+  {
+    id: "full-ui",
+    name: "Full UI",
+    description: "Complete UI layout with top bar, adjustment tools, and right panel",
+    component: FullUI,
+    hasVariations: false,
+  },
   {
     id: "right-panel",
     name: "Right Panel",
@@ -78,42 +86,6 @@ export const prototypes: Prototype[] = [
     },
   },
   {
-    id: "example-contact-form",
-    name: "Contact Form",
-    description: "A simple contact form with name, email, and message fields",
-    component: ExampleContactForm,
-    hasVariations: false,
-    fields: [
-      {
-        name: "name",
-        type: "text",
-        label: "Name",
-        required: true,
-        placeholder: "John Doe",
-        description: "Your full name",
-        validation: "Minimum 2 characters",
-      },
-      {
-        name: "email",
-        type: "email",
-        label: "Email",
-        required: true,
-        placeholder: "john@example.com",
-        description: "Your email address",
-        validation: "Valid email format",
-      },
-      {
-        name: "message",
-        type: "textarea",
-        label: "Message",
-        required: true,
-        placeholder: "Tell us what's on your mind...",
-        description: "Your message",
-        validation: "Minimum 10 characters",
-      },
-    ],
-  },
-  {
     id: "top-bar",
     name: "Top Bar",
     description: "Top bar component with toolbar, filename editing, and notifications",
@@ -131,6 +103,13 @@ export const prototypes: Prototype[] = [
     name: "Adjustment Tools",
     description: "Model adjustment toolbar with Move, Scale, Rotate, and Multiply tools",
     component: AdjustmentTools,
+    hasVariations: false,
+  },
+  {
+    id: "viewport",
+    name: "Viewport",
+    description: "3D viewport component for viewing and rotating STL models using Three.js",
+    component: Viewport,
     hasVariations: false,
   },
 ]

@@ -10,12 +10,6 @@ This file tracks all components and their variations for cross-chat communicatio
 - **Description**: Right panel component rebuilt from Figma design
 - **Location**: `src/prototypes/components/right-panel/`
 
-### example-contact-form
-- **Status**: Active
-- **Active Variations**: v1 (legacy - single component)
-- **Description**: A simple contact form with name, email, and message fields
-- **Location**: `src/prototypes/example-contact-form.tsx`
-
 ## Notes
 
 - Components with multiple variations use the folder structure: `src/prototypes/components/[component-name]/`

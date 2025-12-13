@@ -331,44 +331,47 @@ export default function AdjustmentTools() {
   }
 
   return (
-    <div className="flex flex-col gap-4 p-5 bg-[#FAF8F6] min-h-screen">
-      <div className="flex items-start justify-start gap-4">
-        {/* Navigation Toolbar */}
-        <div className="flex flex-col items-start justify-start gap-2 p-2 bg-white/50 backdrop-blur-sm border border-[#F0ECE6] rounded-lg">
-          <ToolbarButton
-            icon="/icons/ultimaker/Home--Position.svg"
-            active={activeTool === "move"}
-            onClick={() => handleToolClick("move")}
-          />
-          <ToolbarButton
-            icon="/icons/ultimaker/UltiMaker_Scale-edit.svg"
-            active={activeTool === "scale"}
-            onClick={() => handleToolClick("scale")}
-          />
-          <ToolbarButton
-            icon="/icons/ultimaker/Rotate.svg"
-            active={activeTool === "rotate"}
-            onClick={() => handleToolClick("rotate")}
-          />
-          <ToolbarButton
-            icon="/icons/ultimaker/Replicate.svg"
-            active={activeTool === "multiply"}
-            onClick={() => handleToolClick("multiply")}
-          />
-        </div>
+    <div className="flex flex-col gap-4 p-5 bg-[#FAF8F6] h-full">
+      <div className="flex items-start gap-2">
+        {/* Toolbar Groups - Vertically Stacked */}
+        <div className="flex flex-col gap-4">
+          {/* Navigation Toolbar */}
+          <div className="flex flex-col gap-2 p-2 bg-white/50 backdrop-blur-sm border border-[#F0ECE6] rounded-lg">
+            <ToolbarButton
+              icon="/icons/ultimaker/Home--Position.svg"
+              active={activeTool === "move"}
+              onClick={() => handleToolClick("move")}
+            />
+            <ToolbarButton
+              icon="/icons/ultimaker/UltiMaker_Scale-edit.svg"
+              active={activeTool === "scale"}
+              onClick={() => handleToolClick("scale")}
+            />
+            <ToolbarButton
+              icon="/icons/ultimaker/Rotate.svg"
+              active={activeTool === "rotate"}
+              onClick={() => handleToolClick("rotate")}
+            />
+            <ToolbarButton
+              icon="/icons/ultimaker/Replicate.svg"
+              active={activeTool === "multiply"}
+              onClick={() => handleToolClick("multiply")}
+            />
+          </div>
 
-        {/* Material Selection */}
-        <div className="flex flex-col items-start justify-start gap-2 p-2 bg-white/50 backdrop-blur-sm border border-[#F0ECE6] rounded-lg">
-          <ToolbarButton
-            icon="/icons/ultimaker/Ultimaker-material-1.svg"
-            active={selectedMaterial === "material1"}
-            onClick={() => handleMaterialClick("material1")}
-          />
-          <ToolbarButton
-            icon="/icons/ultimaker/Ultimaker-material-2.svg"
-            active={selectedMaterial === "material2"}
-            onClick={() => handleMaterialClick("material2")}
-          />
+          {/* Material Selection */}
+          <div className="flex flex-col gap-2 p-2 bg-white/50 backdrop-blur-sm border border-[#F0ECE6] rounded-lg">
+            <ToolbarButton
+              icon="/icons/ultimaker/Ultimaker-material-1.svg"
+              active={selectedMaterial === "material1"}
+              onClick={() => handleMaterialClick("material1")}
+            />
+            <ToolbarButton
+              icon="/icons/ultimaker/Ultimaker-material-2.svg"
+              active={selectedMaterial === "material2"}
+              onClick={() => handleMaterialClick("material2")}
+            />
+          </div>
         </div>
 
         {/* Popup Panel */}

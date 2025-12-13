@@ -345,18 +345,34 @@ export default function RightPanelBehaviorV3() {
           <TabsList className="inline-flex items-center text-muted-foreground w-full h-full bg-transparent rounded-none border-0 p-0 justify-start">
             <TabsTrigger
               value="prepare"
-              className="rounded-none border-0 bg-transparent px-2 py-3 text-xs font-normal text-[#707070] shadow-none h-full relative border-b-[3px] border-transparent data-[state=active]:border-[#0C08B2] data-[state=active]:bg-transparent data-[state=active]:text-[#282828] data-[state=active]:font-medium data-[state=active]:shadow-none"
+              className="rounded-none border-0 bg-transparent px-2 py-3 text-xs font-normal text-[#707070] shadow-none h-full relative border-b-[1px] border-transparent data-[state=active]:border-b-[1px] data-[state=active]:border-black data-[state=active]:bg-transparent data-[state=active]:text-[#282828] data-[state=active]:font-medium data-[state=active]:shadow-none"
               style={{
-                marginBottom: '-1px'
+                marginBottom: '0px',
+                borderTopWidth: '0px',
+                borderRightWidth: '0px',
+                borderLeftWidth: '0px',
+                borderTopColor: 'rgba(0, 0, 0, 0)',
+                borderRightColor: 'rgba(0, 0, 0, 0)',
+                borderLeftColor: 'rgba(0, 0, 0, 0)',
+                borderStyle: 'solid',
+                borderImage: 'none'
               }}
             >
               Prepare
             </TabsTrigger>
             <TabsTrigger
               value="preview"
-              className="rounded-none border-0 bg-transparent px-2 py-3 text-xs font-normal text-[#707070] shadow-none h-full relative border-b-[3px] border-transparent data-[state=active]:border-[#0C08B2] data-[state=active]:bg-transparent data-[state=active]:text-[#282828] data-[state=active]:font-medium data-[state=active]:shadow-none"
+              className="rounded-none border-0 bg-transparent px-2 py-3 text-xs font-normal text-[#707070] shadow-none h-full relative border-b-[1px] border-transparent data-[state=active]:border-b-[1px] data-[state=active]:border-black data-[state=active]:bg-transparent data-[state=active]:text-[#282828] data-[state=active]:font-medium data-[state=active]:shadow-none"
               style={{
-                marginBottom: '-1px'
+                marginBottom: '0px',
+                borderTopWidth: '0px',
+                borderRightWidth: '0px',
+                borderLeftWidth: '0px',
+                borderTopColor: 'rgba(0, 0, 0, 0)',
+                borderRightColor: 'rgba(0, 0, 0, 0)',
+                borderLeftColor: 'rgba(0, 0, 0, 0)',
+                borderStyle: 'solid',
+                borderImage: 'none'
               }}
             >
               Preview

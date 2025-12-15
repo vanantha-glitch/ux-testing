@@ -300,7 +300,21 @@ function ToolbarButton({ icon, label, active = false, disabled = false, onClick 
 export default function AdjustmentTools() {
   const { selectedModelId, models, updateModelTransform, selectModel } = useViewport()
   const selectedModel = models.find(m => m.id === selectedModelId)
-  
+  const hasModels = models.length > 0
+
+  // Standalone prototype preview mode (when rendered at /prototypes/adjustment-tools)
+  const [isStandalone, setIsStandalone] = useState(false)
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const path = window.location.pathname || ""
+      // Only enable preview behavior for the isolated prototype route
+      if (path.includes("/prototypes/adjustment-tools")) {
+        setIsStandalone(true)
+      }
+    }
+  }, [])
+
   const [activeTool, setActiveTool] = useState<ToolType>(null)
   const [selectedMaterial, setSelectedMaterial] = useState<MaterialType>(null)
   const [values, setValues] = useState<AdjustmentInputProps["values"]>({
@@ -312,6 +326,13 @@ export default function AdjustmentTools() {
   const [uniformScaling, setUniformScaling] = useState(false)
   const [dropDownModel, setDropDownModel] = useState(false)
   const [gridPlacement, setGridPlacement] = useState(false)
+
+  // When in standalone mode, auto-activate the Move tool so the popup is visible by default
+  useEffect(() => {
+    if (isStandalone && !activeTool) {
+      setActiveTool("move")
+    }
+  }, [isStandalone, activeTool])
 
   // Sync values with selected model
   useEffect(() => {
@@ -424,35 +445,47 @@ export default function AdjustmentTools() {
         {/* Toolbar Groups - Vertically Stacked */}
         <div className="flex flex-col gap-4">
           {/* Navigation Toolbar */}
-          <div className="flex flex-col gap-2 p-2 bg-white/50 backdrop-blur-sm border border-[#F0ECE6] rounded-lg">
+          <div
+            className={cn(
+              "flex flex-col gap-2 p-2 bg-white/50 backdrop-blur-sm border border-[#F0ECE6] rounded-lg",
+              !(hasModels || isStandalone) && "opacity-50 pointer-events-none cursor-not-allowed"
+            )}
+            aria-disabled={!(hasModels || isStandalone)}
+          >
             <ToolbarButton
               icon="/icons/ultimaker/Home--Position.svg"
               active={activeTool === "move"}
-              disabled={!selectedModel}
+              disabled={!selectedModel && !isStandalone}
               onClick={() => handleToolClick("move")}
             />
             <ToolbarButton
               icon="/icons/ultimaker/UltiMaker_Scale-edit.svg"
               active={activeTool === "scale"}
-              disabled={!selectedModel}
+              disabled={!selectedModel && !isStandalone}
               onClick={() => handleToolClick("scale")}
             />
             <ToolbarButton
               icon="/icons/ultimaker/Rotate.svg"
               active={activeTool === "rotate"}
-              disabled={!selectedModel}
+              disabled={!selectedModel && !isStandalone}
               onClick={() => handleToolClick("rotate")}
             />
             <ToolbarButton
               icon="/icons/ultimaker/Replicate.svg"
               active={activeTool === "multiply"}
-              disabled={!selectedModel}
+              disabled={!selectedModel && !isStandalone}
               onClick={() => handleToolClick("multiply")}
             />
           </div>
 
           {/* Material Selection */}
-          <div className="flex flex-col gap-2 p-2 bg-white/50 backdrop-blur-sm border border-[#F0ECE6] rounded-lg">
+          <div
+            className={cn(
+              "flex flex-col gap-2 p-2 bg-white/50 backdrop-blur-sm border border-[#F0ECE6] rounded-lg",
+              !selectedModel && !isStandalone && "opacity-50 pointer-events-none cursor-not-allowed"
+            )}
+            aria-disabled={!selectedModel && !isStandalone}
+          >
             <ToolbarButton
               icon="/icons/ultimaker/Ultimaker-material-1.svg"
               active={selectedMaterial === "material1"}

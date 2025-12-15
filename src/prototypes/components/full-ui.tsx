@@ -26,6 +26,11 @@ const Viewport = dynamic(() => import("./viewport").then(mod => ({ default: mod.
   loading: () => <Skeleton className="h-full w-full" />
 })
 
+const AxisTriad = dynamic(() => import("./axis-triad").then(mod => ({ default: mod.default })), {
+  ssr: false,
+  loading: () => null,
+})
+
 export default function FullUI() {
   return (
     <ViewportProvider initialPrinterId="ultimaker-method-x">
@@ -123,6 +128,21 @@ export default function FullUI() {
             <RightPanelBehaviorV2 />
           </Suspense>
         </div>
+      </div>
+
+      {/* Axis triad overlay - bottom left of full UI */}
+      <div
+        className="absolute"
+        style={{
+          left: 16,
+          bottom: 16,
+          zIndex: 25,
+          pointerEvents: "none",
+        }}
+      >
+        <Suspense fallback={null}>
+          <AxisTriad />
+        </Suspense>
       </div>
     </div>
     </ViewportProvider>

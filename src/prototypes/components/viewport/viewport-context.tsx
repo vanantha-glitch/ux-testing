@@ -49,13 +49,7 @@ const ViewportContext = createContext<ViewportContextValue | undefined>(undefine
 
 export function useViewport() {
   const context = useContext(ViewportContext)
-  // #region agent log
-  fetch('http://127.0.0.1:7242/ingest/1ad7a8e2-a615-4c98-b913-ce10947189d5',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'viewport-context.tsx:51',message:'useViewport called',data:{hasContext:!!context},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-  // #endregion
   if (!context) {
-    // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/1ad7a8e2-a615-4c98-b913-ce10947189d5',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'viewport-context.tsx:53',message:'useViewport error - no context',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-    // #endregion
     throw new Error("useViewport must be used within a ViewportProvider")
   }
   return context
@@ -67,9 +61,6 @@ interface ViewportProviderProps {
 }
 
 export function ViewportProvider({ children, initialPrinterId }: ViewportProviderProps) {
-  // #region agent log
-  fetch('http://127.0.0.1:7242/ingest/1ad7a8e2-a615-4c98-b913-ce10947189d5',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'viewport-context.tsx:63',message:'ViewportProvider rendering',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-  // #endregion
   const defaultConfig = getDefaultBuildPlateConfig()
   const initialPrinter = initialPrinterId ? getBuildPlateConfig(initialPrinterId) : null
   const [selectedPrinter, setSelectedPrinterState] = useState<string>(initialPrinter?.printerId || defaultConfig.printerId)

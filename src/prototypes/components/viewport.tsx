@@ -47,8 +47,10 @@ export default function Viewport({
   const isInitializedRef = useRef<boolean>(false)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
+  const [sceneReady, setSceneReady] = useState(false)
   const [debugInfo, setDebugInfo] = useState<string>("Initializing...")
   const [activeTool, setActiveTool] = useState<"move" | "rotate" | "scale" | null>(null)
+  const [hoveredModelId, setHoveredModelId] = useState<string | null>(null)
 
   const {
     selectedPrinter,
@@ -144,12 +146,22 @@ export default function Viewport({
 
   // Transform controls
   useTransformControls({
+    scene: sceneRef.current,
     object: selectedMesh,
     camera: cameraRef.current,
     renderer: rendererRef.current,
     orbitControls: controlsRef.current,
-    mode: activeTool === "move" ? "translate" : activeTool === "rotate" ? "rotate" : activeTool === "scale" ? "scale" : null,
-    enabled: !!selectedMesh && !!activeTool,
+    // Default to translate so the gizmo is always visible when a model is selected.
+    mode:
+      activeTool === "move"
+        ? "translate"
+        : activeTool === "rotate"
+          ? "rotate"
+          : activeTool === "scale"
+            ? "scale"
+            : "translate",
+    // Keep controls enabled whenever a model is selected; tool choice only changes the mode.
+    enabled: !!selectedMesh,
     onObjectChange: (object) => {
       if (selectedModel && selectedMesh) {
         // Transform controls give us world position/rotation (with base transformations)
@@ -177,6 +189,19 @@ export default function Viewport({
       }
     },
   })
+
+  // Helper to extract modelId from any intersected object (mesh or child)
+  const getModelIdFromObject = useCallback((object: THREE.Object3D | null): string | null => {
+    let current: THREE.Object3D | null = object
+    while (current) {
+      const modelId = (current as any).userData?.modelId as string | undefined
+      if (modelId) {
+        return modelId
+      }
+      current = current.parent
+    }
+    return null
+  }, [])
 
   // Listen for active tool changes from AdjustmentTools
   useEffect(() => {
@@ -377,8 +402,9 @@ export default function Viewport({
       geometry.translate(-center.x, -center.y, -center.z)
 
       // Create material
+      const baseColor = new THREE.Color(0x4a90e2)
       const material = new THREE.MeshPhongMaterial({
-        color: 0x4a90e2,
+        color: baseColor,
         specular: 0x222222,
         shininess: 30,
         flatShading: false,
@@ -403,6 +429,21 @@ export default function Viewport({
         model.position.z + basePositionZ
       )
       mesh.userData.modelId = model.id
+      mesh.userData.baseColor = baseColor
+
+      // Selection outline (1px stroke-style edges)
+      const edgeGeometry = new THREE.EdgesGeometry(geometry)
+      const outlineMaterial = new THREE.LineBasicMaterial({
+        color: 0x000000,
+        linewidth: 1,
+        transparent: true,
+        opacity: 0.9,
+      })
+      const outline = new THREE.LineSegments(edgeGeometry, outlineMaterial)
+      outline.visible = false
+      outline.userData.isSelectionOutline = true
+      mesh.add(outline)
+      mesh.userData.selectionOutline = outline
 
       sceneRef.current.add(mesh)
       modelMeshesRef.current.set(model.id, mesh)
@@ -496,34 +537,24 @@ export default function Viewport({
     
     models.forEach(model => {
       const mesh = modelMeshesRef.current.get(model.id)
-      if (mesh) {
-        // Create model object with mesh for validation
-        const modelWithMesh: Model = { ...model, mesh }
-        const validation = validatePrintableArea(modelWithMesh, buildPlateConfig)
-        
-        if (!validation.isValid) {
-          validation.errors.forEach(err => {
-            errors.push({
-              modelId: model.id,
-              message: err.message,
-              axis: err.axis,
+        if (mesh) {
+          // Create model object with mesh for validation
+          const modelWithMesh: Model = { ...model, mesh }
+          const validation = validatePrintableArea(modelWithMesh, buildPlateConfig)
+          
+          if (!validation.isValid) {
+            validation.errors.forEach(err => {
+              errors.push({
+                modelId: model.id,
+                message: err.message,
+                axis: err.axis,
+              })
             })
-          })
-        }
+          }
 
-        // Visual feedback: red outline if invalid
-        if (Array.isArray(mesh.material)) {
-          mesh.material.forEach((mat: THREE.Material) => {
-            if (mat instanceof THREE.MeshPhongMaterial) {
-              mat.emissive.setHex(validation.isValid ? 0x000000 : 0xff0000)
-              mat.emissiveIntensity = validation.isValid ? 0 : 0.3
-            }
-          })
-        } else if (mesh.material instanceof THREE.MeshPhongMaterial) {
-          mesh.material.emissive.setHex(validation.isValid ? 0x000000 : 0xff0000)
-          mesh.material.emissiveIntensity = validation.isValid ? 0 : 0.3
+          // Store validation state for later visual styling
+          ;(mesh as any).userData.validationIsValid = validation.isValid
         }
-      }
     })
 
     setValidationErrors(errors)
@@ -539,19 +570,57 @@ export default function Viewport({
     }
   }, [models, buildPlateConfig, setValidationErrors, validationErrors.length, toast])
 
+  // Visual styling for hover / selection / validation
+  useEffect(() => {
+    modelMeshesRef.current.forEach((mesh, id) => {
+      const isSelected = id === selectedModelId
+      const isHovered = id === hoveredModelId
+      const isValid = (mesh as any).userData?.validationIsValid !== false
+      const baseColor: THREE.Color =
+        (mesh as any).userData?.baseColor instanceof THREE.Color
+          ? (mesh as any).userData.baseColor
+          : (mesh.material instanceof THREE.MeshPhongMaterial
+              ? mesh.material.color.clone()
+              : new THREE.Color(0x4a90e2))
+
+      // Update fill color (slightly brighter on hover)
+      if (mesh.material instanceof THREE.MeshPhongMaterial) {
+        const targetColor = isHovered
+          ? baseColor.clone().lerp(new THREE.Color(0xffffff), 0.2)
+          : baseColor
+        mesh.material.color.copy(targetColor)
+
+        // Validation feedback via emissive
+        if (!isValid) {
+          mesh.material.emissive.setHex(0xff0000)
+          mesh.material.emissiveIntensity = 0.3
+        } else {
+          mesh.material.emissive.setHex(0x000000)
+          mesh.material.emissiveIntensity = 0
+        }
+      }
+
+      // Selection outline visibility
+      const outline = (mesh as any).userData?.selectionOutline as THREE.LineSegments | undefined
+      if (outline) {
+        outline.visible = isSelected
+      }
+    })
+  }, [hoveredModelId, selectedModelId])
+
   // Load build plate when printer changes or scene is initialized
   useEffect(() => {
-    if (sceneRef.current && buildPlateConfig) {
+    if (sceneReady && sceneRef.current && buildPlateConfig) {
       loadBuildPlate(buildPlateConfig)
     }
-  }, [selectedPrinter, buildPlateConfig, loadBuildPlate])
+  }, [selectedPrinter, buildPlateConfig, loadBuildPlate, sceneReady])
 
   // Ensure build plate loads after scene initialization
   useEffect(() => {
-    if (sceneRef.current && buildPlateConfig && !buildPlateMeshRef.current) {
+    if (sceneReady && sceneRef.current && buildPlateConfig && !buildPlateMeshRef.current) {
       loadBuildPlate(buildPlateConfig)
     }
-  }, [buildPlateConfig, loadBuildPlate])
+  }, [buildPlateConfig, loadBuildPlate, sceneReady])
 
   // Handle model selection via click
   const handleModelClick = useCallback((event: MouseEvent) => {
@@ -569,15 +638,40 @@ export default function Viewport({
     const intersects = raycasterRef.current.intersectObjects(meshes, true)
 
     if (intersects.length > 0) {
-      const clickedMesh = intersects[0].object as THREE.Mesh
-      const modelId = clickedMesh.userData.modelId
+      const clickedObject = intersects[0].object
+      const modelId = getModelIdFromObject(clickedObject)
       if (modelId) {
         selectModel(modelId)
+        return
       }
-    } else {
-      selectModel(null)
     }
-  }, [selectModel])
+
+    selectModel(null)
+  }, [selectModel, getModelIdFromObject])
+
+  // Handle hover state (slightly brighter model on hover)
+  const handleModelHover = useCallback((event: MouseEvent) => {
+    if (!cameraRef.current || !sceneRef.current || !raycasterRef.current) return
+
+    const rect = containerRef.current?.getBoundingClientRect()
+    if (!rect) return
+
+    mouseRef.current.x = ((event.clientX - rect.left) / rect.width) * 2 - 1
+    mouseRef.current.y = -((event.clientY - rect.top) / rect.height) * 2 + 1
+
+    raycasterRef.current.setFromCamera(mouseRef.current, cameraRef.current)
+
+    const meshes = Array.from(modelMeshesRef.current.values())
+    const intersects = raycasterRef.current.intersectObjects(meshes, true)
+
+    if (intersects.length > 0) {
+      const hoveredObject = intersects[0].object
+      const modelId = getModelIdFromObject(hoveredObject)
+      setHoveredModelId(modelId || null)
+    } else {
+      setHoveredModelId(null)
+    }
+  }, [getModelIdFromObject])
 
   useEffect(() => {
     const container = containerRef.current
@@ -588,6 +682,22 @@ export default function Viewport({
       container.removeEventListener("click", handleModelClick)
     }
   }, [handleModelClick])
+
+  // Hover listeners for models
+  useEffect(() => {
+    const container = containerRef.current
+    if (!container) return
+
+    const handleMouseLeave = () => setHoveredModelId(null)
+
+    container.addEventListener("mousemove", handleModelHover)
+    container.addEventListener("mouseleave", handleMouseLeave)
+
+    return () => {
+      container.removeEventListener("mousemove", handleModelHover)
+      container.removeEventListener("mouseleave", handleMouseLeave)
+    }
+  }, [handleModelHover])
 
   // Initialize scene
   useEffect(() => {
@@ -697,6 +807,7 @@ export default function Viewport({
       window.addEventListener("resize", handleResize)
 
       setLoading(false)
+      setSceneReady(true)
 
       // Set cleanup function
       cleanup = () => {
@@ -750,6 +861,7 @@ export default function Viewport({
         sceneRef.current = null
         cameraRef.current = null
         isInitializedRef.current = false
+        setSceneReady(false)
       }
     }
 

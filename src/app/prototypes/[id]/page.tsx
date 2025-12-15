@@ -174,6 +174,7 @@ function ComponentPageContent() {
   if (!prototype.hasVariations && prototype.component) {
     const Component = prototype.component
     const isFullUI = id === "full-ui"
+    const needsViewportProvider = id === "viewport" || id === "adjustment-tools"
     // #region agent log
     fetch('http://127.0.0.1:7242/ingest/1ad7a8e2-a615-4c98-b913-ce10947189d5',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'page.tsx:174',message:'Rendering legacy component',data:{prototypeId:id,componentName:Component.name,isFullUI},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
     // #endregion
@@ -198,7 +199,7 @@ function ComponentPageContent() {
           </div>
           <div className="flex-1 overflow-hidden" style={{ backgroundColor: isFullUI ? '#FAF8F6' : undefined }}>
             <div className="flex-1 overflow-y-auto" style={{ backgroundColor: isFullUI ? '#FAF8F6' : undefined }}>
-              {id === "viewport" ? (
+              {needsViewportProvider ? (
                 <ViewportProvider>
                   <Component />
                 </ViewportProvider>

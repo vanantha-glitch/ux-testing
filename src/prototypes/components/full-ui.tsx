@@ -3,6 +3,7 @@
 import dynamic from "next/dynamic"
 import { Suspense } from "react"
 import { Skeleton } from "@/components/ui/skeleton"
+import { ViewportProvider } from "./viewport/viewport-context"
 
 // Dynamically import the production components
 const TopBarProduction = dynamic(() => import("./top-bar/production").then(mod => ({ default: mod.default })), {
@@ -10,7 +11,7 @@ const TopBarProduction = dynamic(() => import("./top-bar/production").then(mod =
   loading: () => <Skeleton className="h-16 w-full" />
 })
 
-const RightPanelBehaviorV2 = dynamic(() => import("./right-panel/behavior-v2").then(mod => ({ default: mod.default })), {
+const RightPanelBehaviorV2 = dynamic(() => import("./right-panel/production").then(mod => ({ default: mod.default })), {
   ssr: false,
   loading: () => <Skeleton className="h-[896px] w-[240px]" />
 })
@@ -27,6 +28,7 @@ const Viewport = dynamic(() => import("./viewport").then(mod => ({ default: mod.
 
 export default function FullUI() {
   return (
+    <ViewportProvider initialPrinterId="ultimaker-method-x">
     <div 
       className="relative flex flex-col bg-[#FAF8F6]"
       style={{
@@ -60,7 +62,7 @@ export default function FullUI() {
         }}
       >
         <Suspense fallback={<Skeleton className="h-full w-full" />}>
-          <Viewport />
+          <Viewport showDropdowns={false} />
         </Suspense>
       </div>
 
@@ -123,6 +125,7 @@ export default function FullUI() {
         </div>
       </div>
     </div>
+    </ViewportProvider>
   )
 }
 

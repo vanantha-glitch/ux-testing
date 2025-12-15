@@ -1,12 +1,14 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
 import { SvgIcon } from "@/components/icons/svg-icon"
 import { cn } from "@/lib/utils"
+import { useViewport } from "./viewport/viewport-context"
+import { snapToBuildPlate } from "./viewport/printable-area-validator"
 
 type ToolType = "move" | "scale" | "rotate" | "multiply" | null
 type MaterialType = "material1" | "material2" | null
@@ -296,6 +298,9 @@ function ToolbarButton({ icon, label, active = false, disabled = false, onClick 
 }
 
 export default function AdjustmentTools() {
+  const { selectedModelId, models, updateModelTransform, selectModel } = useViewport()
+  const selectedModel = models.find(m => m.id === selectedModelId)
+  
   const [activeTool, setActiveTool] = useState<ToolType>(null)
   const [selectedMaterial, setSelectedMaterial] = useState<MaterialType>(null)
   const [values, setValues] = useState<AdjustmentInputProps["values"]>({
@@ -308,16 +313,98 @@ export default function AdjustmentTools() {
   const [dropDownModel, setDropDownModel] = useState(false)
   const [gridPlacement, setGridPlacement] = useState(false)
 
+  // Sync values with selected model
+  useEffect(() => {
+    if (selectedModel) {
+      if (activeTool === "move") {
+        setValues({
+          x: selectedModel.position.x.toFixed(2),
+          y: selectedModel.position.y.toFixed(2),
+          z: selectedModel.position.z.toFixed(2),
+        })
+      } else if (activeTool === "rotate") {
+        setValues({
+          x: (selectedModel.rotation.x * (180 / Math.PI)).toFixed(2),
+          y: (selectedModel.rotation.y * (180 / Math.PI)).toFixed(2),
+          z: (selectedModel.rotation.z * (180 / Math.PI)).toFixed(2),
+        })
+      } else if (activeTool === "scale") {
+        setValues({
+          x: selectedModel.scale.x.toFixed(2),
+          y: selectedModel.scale.y.toFixed(2),
+          z: selectedModel.scale.z.toFixed(2),
+          xPercent: ((selectedModel.scale.x - 1) * 100).toFixed(2),
+          yPercent: ((selectedModel.scale.y - 1) * 100).toFixed(2),
+          zPercent: ((selectedModel.scale.z - 1) * 100).toFixed(2),
+        })
+      }
+    }
+  }, [selectedModel, activeTool])
+
+  // Handle drop down model
+  useEffect(() => {
+    if (dropDownModel && selectedModel) {
+      const snappedModel = snapToBuildPlate(selectedModel)
+      updateModelTransform(selectedModel.id, {
+        position: snappedModel.position,
+      })
+      setDropDownModel(false)
+    }
+  }, [dropDownModel, selectedModel, updateModelTransform])
+
   const handleToolClick = (tool: ToolType) => {
-    setActiveTool(activeTool === tool ? null : tool)
+    const newTool = activeTool === tool ? null : tool
+    setActiveTool(newTool)
+    
+    // Emit event for viewport to listen to
+    window.dispatchEvent(new CustomEvent("adjustment-tool-change", {
+      detail: newTool === "move" ? "move" : newTool === "rotate" ? "rotate" : newTool === "scale" ? "scale" : null
+    }))
   }
 
   const handleMaterialClick = (material: MaterialType) => {
     setSelectedMaterial(selectedMaterial === material ? null : material)
   }
 
+  const handleValuesChange = (newValues: AdjustmentInputProps["values"]) => {
+    setValues(newValues)
+    
+    if (!selectedModel) return
+
+    if (activeTool === "move") {
+      const x = parseFloat(newValues.x || "0")
+      const y = parseFloat(newValues.y || "0")
+      const z = parseFloat(newValues.z || "0")
+      updateModelTransform(selectedModel.id, {
+        position: { x, y, z },
+      })
+    } else if (activeTool === "rotate") {
+      const x = (parseFloat(newValues.x || "0") * Math.PI) / 180
+      const y = (parseFloat(newValues.y || "0") * Math.PI) / 180
+      const z = (parseFloat(newValues.z || "0") * Math.PI) / 180
+      updateModelTransform(selectedModel.id, {
+        rotation: { x, y, z },
+      })
+    } else if (activeTool === "scale") {
+      let x = parseFloat(newValues.x || "1")
+      let y = parseFloat(newValues.y || "1")
+      let z = parseFloat(newValues.z || "1")
+      
+      if (uniformScaling && newValues.x) {
+        x = parseFloat(newValues.x || "1")
+        y = x
+        z = x
+      }
+      
+      updateModelTransform(selectedModel.id, {
+        scale: { x, y, z },
+      })
+    }
+  }
+
   const handleCancel = () => {
     setActiveTool(null)
+    window.dispatchEvent(new CustomEvent("adjustment-tool-change", { detail: null }))
     setValues({ x: "0", y: "0", z: "0", copies: "1" })
     setUniformScaling(false)
     setDropDownModel(false)
@@ -325,9 +412,10 @@ export default function AdjustmentTools() {
   }
 
   const handleConfirm = () => {
-    // Handle confirm action
+    // Handle confirm action (for multiply tool)
     console.log("Confirm", { activeTool, values, uniformScaling, dropDownModel, gridPlacement })
     setActiveTool(null)
+    window.dispatchEvent(new CustomEvent("adjustment-tool-change", { detail: null }))
   }
 
   return (
@@ -340,21 +428,25 @@ export default function AdjustmentTools() {
             <ToolbarButton
               icon="/icons/ultimaker/Home--Position.svg"
               active={activeTool === "move"}
+              disabled={!selectedModel}
               onClick={() => handleToolClick("move")}
             />
             <ToolbarButton
               icon="/icons/ultimaker/UltiMaker_Scale-edit.svg"
               active={activeTool === "scale"}
+              disabled={!selectedModel}
               onClick={() => handleToolClick("scale")}
             />
             <ToolbarButton
               icon="/icons/ultimaker/Rotate.svg"
               active={activeTool === "rotate"}
+              disabled={!selectedModel}
               onClick={() => handleToolClick("rotate")}
             />
             <ToolbarButton
               icon="/icons/ultimaker/Replicate.svg"
               active={activeTool === "multiply"}
+              disabled={!selectedModel}
               onClick={() => handleToolClick("multiply")}
             />
           </div>
@@ -383,7 +475,7 @@ export default function AdjustmentTools() {
                 <AdjustmentInput
                   type={activeTool}
                   values={values}
-                  onValuesChange={setValues}
+                  onValuesChange={handleValuesChange}
                   showUniformScaling={activeTool === "scale"}
                   uniformScaling={uniformScaling}
                   onUniformScalingChange={setUniformScaling}

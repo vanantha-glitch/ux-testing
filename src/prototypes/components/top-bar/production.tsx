@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -13,11 +13,14 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Folder, Edit, Notification, CloudUpload, Reset, ChevronDown, Clean, Grid, Select, CaretDown } from "@/lib/icons"
 import { SvgIcon } from "@/components/icons/svg-icon"
+import { useViewport } from "../viewport/viewport-context"
 
 export default function TopBarProduction() {
+  const { models, addModel, clearModels } = useViewport()
   const [filename, setFilename] = useState("Filename.stl")
   const [isEditing, setIsEditing] = useState(false)
-  const [modelsOnBuildPlate, setModelsOnBuildPlate] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const modelsOnBuildPlate = models.length > 0
 
   return (
     <div 
@@ -33,7 +36,7 @@ export default function TopBarProduction() {
       }}
     >
       <div 
-        className="w-full bg-white border-b border-[#F0ECE6] flex items-center h-16" 
+        className="w-full border-b border-[#EAEAEA] flex items-center h-16" 
         style={{ 
           width: '1440px', 
           maxWidth: '1440px', 
@@ -78,7 +81,11 @@ export default function TopBarProduction() {
                   <DropdownMenuItem 
                     className="gap-2 px-2 py-2 text-xs font-normal text-[#282828] rounded hover:bg-[#F2F4F8] focus:bg-[#F2F4F8] cursor-pointer flex items-center"
                     onSelect={() => {
-                      // Handle Library action
+                      // Handle Library action - load from models folder
+                      const modelPath = "/models/boomBracket.stl"
+                      addModel(modelPath, "boomBracket.stl")
+                      setFilename("boomBracket.stl")
+                      window.dispatchEvent(new CustomEvent('upload-file-selected'))
                     }}
                   >
                     <SvgIcon 
@@ -92,8 +99,10 @@ export default function TopBarProduction() {
                   <DropdownMenuItem 
                     className="gap-2 px-2 py-2 text-xs font-normal text-[#282828] rounded hover:bg-[#F2F4F8] focus:bg-[#F2F4F8] cursor-pointer flex items-center"
                     onSelect={() => {
-                      setModelsOnBuildPlate(true)
-                      // Dispatch custom event to focus printer type
+                      // Add boomBracket when Upload File is selected (same as Library)
+                      const modelPath = "/models/boomBracket.stl"
+                      addModel(modelPath, "boomBracket.stl")
+                      setFilename("boomBracket.stl")
                       window.dispatchEvent(new CustomEvent('upload-file-selected'))
                     }}
                   >
@@ -109,6 +118,7 @@ export default function TopBarProduction() {
                   size="icon"
                   className="h-10 w-10 p-0 hover:bg-[#EAEAEA]"
                   aria-label="Clean"
+                  onClick={() => clearModels()}
                 >
                   <Clean size={16} className="text-[#282828]" />
                 </Button>
@@ -117,6 +127,9 @@ export default function TopBarProduction() {
                   size="icon"
                   className="h-10 w-10 p-0 hover:bg-[#EAEAEA]"
                   aria-label="Reset"
+                  onClick={() => {
+                    // Reset camera/view - could be implemented later
+                  }}
                 >
                   <Reset size={16} className="text-[#282828]" />
                 </Button>
@@ -168,7 +181,11 @@ export default function TopBarProduction() {
                   <DropdownMenuItem 
                     className="gap-2 px-2 py-2 text-xs font-normal text-[#282828] rounded hover:bg-[#F2F4F8] focus:bg-[#F2F4F8] cursor-pointer flex items-center"
                     onSelect={() => {
-                      // Handle Library action
+                      // Handle Library action - load from models folder
+                      const modelPath = "/models/boomBracket.stl"
+                      addModel(modelPath, "boomBracket.stl")
+                      setFilename("boomBracket.stl")
+                      window.dispatchEvent(new CustomEvent('upload-file-selected'))
                     }}
                   >
                     <SvgIcon 
@@ -182,8 +199,10 @@ export default function TopBarProduction() {
                   <DropdownMenuItem 
                     className="gap-2 px-2 py-2 text-xs font-normal text-[#282828] rounded hover:bg-[#F2F4F8] focus:bg-[#F2F4F8] cursor-pointer flex items-center"
                     onSelect={() => {
-                      setModelsOnBuildPlate(true)
-                      // Dispatch custom event to focus printer type
+                      // Add boomBracket when Upload File is selected (same as Library)
+                      const modelPath = "/models/boomBracket.stl"
+                      addModel(modelPath, "boomBracket.stl")
+                      setFilename("boomBracket.stl")
                       window.dispatchEvent(new CustomEvent('upload-file-selected'))
                     }}
                   >
@@ -268,6 +287,24 @@ export default function TopBarProduction() {
           </Button>
         </div>
       </div>
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".stl,.obj"
+        style={{ display: 'none' }}
+        onChange={(e) => {
+          const file = e.target.files?.[0]
+          if (file) {
+            // Create object URL for the file
+            const objectUrl = URL.createObjectURL(file)
+            addModel(objectUrl, file.name)
+            setFilename(file.name)
+            window.dispatchEvent(new CustomEvent('upload-file-selected'))
+            // Clean up object URL after a delay (file will be loaded)
+            setTimeout(() => URL.revokeObjectURL(objectUrl), 1000)
+          }
+        }}
+      />
     </div>
   )
 }

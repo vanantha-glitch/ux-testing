@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
+import { useViewport } from "../viewport/viewport-context"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
@@ -48,6 +49,7 @@ import {
 } from "@/components/ui/item"
 
 export default function RightPanelProduction() {
+  const { selectedPrinter, setSelectedPrinter, buildPlateConfig, validationErrors } = useViewport()
   const [activeTab, setActiveTab] = useState("prepare")
   const [profileOpen, setProfileOpen] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
@@ -122,7 +124,7 @@ export default function RightPanelProduction() {
       }}
     >
       <div 
-        className="w-[240px] max-w-[240px] min-w-[240px] flex-shrink-0 flex-grow-0 bg-white rounded-lg shadow-sm flex flex-col h-[896px]" 
+        className="w-[240px] max-w-[240px] min-w-[240px] flex-shrink-0 flex-grow-0 bg-white rounded-lg shadow-sm flex flex-col h-[896px] overflow-hidden" 
         style={{ 
           width: '240px', 
           maxWidth: '240px', 
@@ -137,7 +139,7 @@ export default function RightPanelProduction() {
       >
       <Tabs value={activeTab} onValueChange={setActiveTab} defaultValue="prepare" className="flex flex-col h-full w-full gap-4 rounded-lg" style={{ borderRadius: '8px' }}>
         {/* Tabs Header */}
-        <div className="w-full h-[42px] bg-background rounded-t-lg p-0" style={{ borderBottom: '1px solid #EAEAEA' }}>
+        <div className="w-full h-[42px] bg-background rounded-none p-0" style={{ borderBottom: '1px solid #EAEAEA' }}>
           <TabsList className="bg-background rounded-none border-b p-0 h-full w-full inline-flex items-center justify-start">
             <TabsTrigger
               value="prepare"
@@ -195,6 +197,14 @@ export default function RightPanelProduction() {
                     style={{ backgroundColor: hoveredItem === 'printer' ? '#F8F8F8' : 'transparent' }}
                     onMouseEnter={() => setHoveredItem('printer')}
                     onMouseLeave={() => setHoveredItem(null)}
+                    onClick={() => {
+                      // Cycle through available printers or open a dialog
+                      // For now, cycle through the available printers
+                      const printers = ['ultimaker-s7', 'ultimaker-s3', 'ultimaker-method-x', 'ultimaker-method-xl', 'ultimaker-factor4', 'makerbot-sketch-sprint']
+                      const currentIndex = printers.indexOf(selectedPrinter)
+                      const nextIndex = (currentIndex + 1) % printers.length
+                      setSelectedPrinter(printers[nextIndex])
+                    }}
                     tabIndex={0}
                   >
                     <ItemMedia>
@@ -202,6 +212,7 @@ export default function RightPanelProduction() {
                     </ItemMedia>
                     <ItemContent>
                       <ItemTitle className="text-xs text-[#282828]">Printer Type</ItemTitle>
+                      <ItemDescription className="text-xs text-[#707070]">{buildPlateConfig.printerName}</ItemDescription>
                     </ItemContent>
                   </Item>
                   
@@ -569,10 +580,14 @@ export default function RightPanelProduction() {
                     <h3 className="text-xs font-semibold text-[#282828]">Print Validation</h3>
                   </div>
                   <div className="flex items-center gap-2 px-2 py-2 rounded">
-                    <CheckmarkFilled size={16} className="text-[#A9A9A9]" />
+                    <CheckmarkFilled size={16} className={validationErrors.length > 0 ? "text-red-500" : "text-[#A9A9A9]"} />
                     <div className="flex-1">
-                      <p className="text-xs text-[#A9A9A9]">0</p>
-                      <p className="text-xs text-[#A9A9A9]">No issues detected</p>
+                      <p className={`text-xs ${validationErrors.length > 0 ? "text-red-500" : "text-[#A9A9A9]"}`}>
+                        {validationErrors.length}
+                      </p>
+                      <p className={`text-xs ${validationErrors.length > 0 ? "text-red-500" : "text-[#A9A9A9]"}`}>
+                        {validationErrors.length === 0 ? "No issues detected" : validationErrors.length === 1 ? "1 issue detected" : `${validationErrors.length} issues detected`}
+                      </p>
                     </div>
                   </div>
                 </div>

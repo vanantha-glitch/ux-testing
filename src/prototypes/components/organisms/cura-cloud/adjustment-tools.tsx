@@ -7,8 +7,8 @@ import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
 import { SvgIcon } from "@/components/icons/svg-icon"
 import { cn } from "@/lib/utils"
-import { useViewport } from "./viewport/viewport-context"
-import { snapToBuildPlate } from "./viewport/printable-area-validator"
+import { useViewport } from "../../viewport/viewport-context"
+import { snapToBuildPlate } from "../../viewport/printable-area-validator"
 
 type ToolType = "move" | "scale" | "rotate" | "multiply" | null
 type MaterialType = "material1" | "material2" | null

@@ -12,6 +12,8 @@ import {
   getBranches,
   getVariationsForBranch,
   getVariationDescription,
+  isPage,
+  isOrganism,
 } from "@/prototypes/registry"
 import {
   loadVariation,
@@ -37,12 +39,15 @@ import {
 import { ComponentType } from "react"
 import { Skeleton } from "@/components/ui/skeleton"
 import { ViewportProvider } from "@/prototypes/components/viewport/viewport-context"
+import { PrototypeModeProvider, usePrototypeMode } from "@/contexts/prototype-mode-context"
+import { PrototypeModeToggle } from "@/components/prototype-mode-toggle"
 
 function ComponentPageContent() {
   const params = useParams()
   const router = useRouter()
   const id = params.id as string
   const prototype = getPrototype(id)
+  const { mode, isProduction } = usePrototypeMode()
 
   const [activeVariations, setActiveVariations] = useState<string[]>([])
   const [loadedComponents, setLoadedComponents] = useState<Record<string, ComponentType>>({})
@@ -57,25 +62,31 @@ function ComponentPageContent() {
     if (!prototype) return
 
     if (prototype.hasVariations) {
-      // Get variations for selected branch (or all if no branch selected)
-      const active = getVariationsForBranch(id, selectedBranch)
-      setActiveVariations(active)
-      
-      if (active.length > 0) {
-        // Check for hash in URL to set initial tab
-        const hash = typeof window !== "undefined" ? window.location.hash.slice(1) : ""
-        const hashVariation = hash && active.includes(hash) ? hash : null
-        setActiveTab(hashVariation || active[0])
+      // In production mode, only show production variation
+      if (isProduction) {
+        setActiveVariations(["production"])
+        setActiveTab("production")
+      } else {
+        // Get variations for selected branch (or all if no branch selected)
+        const active = getVariationsForBranch(id, selectedBranch)
+        setActiveVariations(active)
+        
+        if (active.length > 0) {
+          // Check for hash in URL to set initial tab
+          const hash = typeof window !== "undefined" ? window.location.hash.slice(1) : ""
+          const hashVariation = hash && active.includes(hash) ? hash : null
+          setActiveTab(hashVariation || active[0])
+        }
       }
     } else {
       // Legacy component without variations
       setActiveTab("default")
     }
-  }, [id, prototype, selectedBranch])
+  }, [id, prototype, selectedBranch, isProduction])
 
   // Handle hash changes for direct navigation to variations
   useEffect(() => {
-    if (!prototype?.hasVariations) return
+    if (!prototype?.hasVariations || isProduction) return
 
     const handleHashChange = () => {
       const hash = window.location.hash.slice(1)
@@ -90,7 +101,7 @@ function ComponentPageContent() {
     // Listen for hash changes
     window.addEventListener("hashchange", handleHashChange)
     return () => window.removeEventListener("hashchange", handleHashChange)
-  }, [prototype, activeVariations])
+  }, [prototype, activeVariations, isProduction])
 
   useEffect(() => {
     if (!prototype?.hasVariations || activeVariations.length === 0) return
@@ -135,13 +146,14 @@ function ComponentPageContent() {
   if (!prototype) {
     return (
       <div className="container mx-auto py-8 px-4" style={{ backgroundColor: '#FAF8F6', minHeight: '100vh' }}>
-        <div className="mb-6">
+        <div className="mb-6 flex items-center justify-between">
           <Link href="/prototypes">
             <Button variant="ghost" className="mb-4">
               <ArrowLeft className="mr-2 h-4 w-4" />
               Back to Prototypes
             </Button>
           </Link>
+          <PrototypeModeToggle />
         </div>
         <div className="bg-card border rounded-lg p-8 text-center">
           <h1 className="text-2xl font-bold mb-2">Prototype Not Found</h1>
@@ -170,35 +182,46 @@ function ComponentPageContent() {
     alert(`Delete functionality will be implemented. Would delete: ${variationToDelete}`)
   }
 
+  const prototypeType = isPage(prototype) ? "page" : isOrganism(prototype) ? "organism" : "component"
+  const backText = prototypeType === "page" ? "Back to Pages" : "Back to Organisms"
+  
+  // Check if this component needs ViewportProvider
+  // Pages that already have ViewportProvider internally (like cura-cloud) should be excluded
+  const needsViewportProvider = (
+    id === "viewport" || 
+    id === "adjustment-tools" || 
+    id === "top-bar" || 
+    id === "right-panel" ||
+    (isOrganism(prototype) && prototype.pageId === "cura-cloud")
+  ) && id !== "cura-cloud"
+
   // Legacy component (no variations)
   if (!prototype.hasVariations && prototype.component) {
     const Component = prototype.component
-    const isFullUI = id === "full-ui"
-    const needsViewportProvider = id === "viewport" || id === "adjustment-tools"
-    // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/1ad7a8e2-a615-4c98-b913-ce10947189d5',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'page.tsx:174',message:'Rendering legacy component',data:{prototypeId:id,componentName:Component.name,isFullUI},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-    // #endregion
+    const isCuraCloud = id === "cura-cloud"
+    
     return (
       <div className="container mx-auto py-8 px-4" style={{ backgroundColor: '#FAF8F6', minHeight: '100vh' }}>
-        <div className="mb-6">
+        <div className="mb-6 flex items-center justify-between">
           <Link href="/prototypes">
             <Button variant="ghost" className="mb-4">
               <ArrowLeft size={16} className="mr-2" />
-              Back to Prototypes
+              {backText}
             </Button>
           </Link>
-          <div className="mb-4">
-            <h1 className="text-3xl font-bold mb-2">{prototype.name}</h1>
-            <p className="text-muted-foreground">{prototype.description}</p>
-          </div>
+          <PrototypeModeToggle />
+        </div>
+        <div className="mb-4">
+          <h1 className="text-3xl font-bold mb-2">{prototype.name}</h1>
+          <p className="text-muted-foreground">{prototype.description}</p>
         </div>
 
-        <div className="bg-card border rounded-lg flex flex-col" style={{ minHeight: '992px', backgroundColor: isFullUI ? '#FAF8F6' : undefined }}>
+        <div className="bg-card border rounded-lg flex flex-col" style={{ minHeight: '992px', backgroundColor: isCuraCloud ? '#FAF8F6' : undefined }}>
           <div className="flex items-center justify-between p-6 pb-4 border-b flex-shrink-0">
             <h2 className="text-lg font-semibold">Preview</h2>
           </div>
-          <div className="flex-1 overflow-hidden" style={{ backgroundColor: isFullUI ? '#FAF8F6' : undefined }}>
-            <div className="flex-1 overflow-y-auto" style={{ backgroundColor: isFullUI ? '#FAF8F6' : undefined }}>
+          <div className="flex-1 overflow-hidden" style={{ backgroundColor: isCuraCloud ? '#FAF8F6' : undefined }}>
+            <div className="flex-1 overflow-y-auto" style={{ backgroundColor: isCuraCloud ? '#FAF8F6' : undefined }}>
               {needsViewportProvider ? (
                 <ViewportProvider>
                   <Component />
@@ -247,18 +270,21 @@ function ComponentPageContent() {
   return (
     <div className="container mx-auto py-8 px-4" style={{ backgroundColor: '#FAF8F6', minHeight: '100vh' }}>
       <div className="mb-6">
-        <Link href="/prototypes">
-          <Button variant="ghost" className="mb-4">
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Prototypes
-          </Button>
-        </Link>
-        <div className="mb-4 flex items-start justify-between gap-4">
+        <div className="flex items-center justify-between mb-4">
+          <Link href="/prototypes">
+            <Button variant="ghost">
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              {backText}
+            </Button>
+          </Link>
+          <PrototypeModeToggle />
+        </div>
+        <div className="flex items-start justify-between gap-4">
           <div className="flex-1">
             <h1 className="text-3xl font-bold mb-2">{prototype.name}</h1>
             <p className="text-muted-foreground">{prototype.description}</p>
           </div>
-          {hasBranches && (
+          {hasBranches && !isProduction && (
             <div className="flex items-center gap-2 flex-shrink-0">
               <Label htmlFor="branch-select" className="text-sm font-medium whitespace-nowrap">
                 Exploration Type
@@ -281,89 +307,38 @@ function ComponentPageContent() {
         </div>
       </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <div className="flex items-center justify-between mb-4">
-          <TabsList>
-            {activeVariations.map((variationId) => (
-              <TabsTrigger key={variationId} value={variationId}>
-                {variationId === "production" ? "Production" : variationId}
-              </TabsTrigger>
-            ))}
-          </TabsList>
-        </div>
-
-        {activeVariations.map((variationId) => {
-          const Component = loadedComponents[variationId]
-          const description = getVariationDescription(id, variationId)
-          const isProduction = variationId === "production"
-          const showDesc = showDescription[variationId] || false
-          
-          return (
-            <TabsContent key={variationId} value={variationId} className="mt-0">
+      {/* In production mode, hide tabs and show only production */}
+      {isProduction ? (
+        <div className="w-full">
+          {(() => {
+            const Component = loadedComponents["production"]
+            const description = getVariationDescription(id, "production")
+            
+            return (
               <div className="bg-card border rounded-lg flex flex-col" style={{ minHeight: '992px', backgroundColor: '#FAF8F6' }}>
                 <div className="flex flex-col p-6 pb-4 border-b flex-shrink-0 gap-3">
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3 flex-1">
-                      <h2 className="text-lg font-semibold">
-                        {isProduction ? "Production" : `Variation ${variationId}`}
-                      </h2>
-                      {description && (
-                        <>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => setShowDescription({ ...showDescription, [variationId]: !showDesc })}
-                            className="h-auto p-1 text-muted-foreground hover:text-foreground"
-                            aria-label={showDesc ? "Hide description" : "Show description"}
-                          >
-                            {showDesc ? <ViewOff size={16} /> : <View size={16} />}
-                          </Button>
-                          {showDesc && (
-                            <p className="text-sm text-muted-foreground">
-                              {description}
-                            </p>
-                          )}
-                        </>
-                      )}
-                    </div>
+                    <h2 className="text-lg font-semibold">Production</h2>
                   </div>
                 </div>
                 <div className="flex-1 overflow-hidden" style={{ backgroundColor: '#FAF8F6' }}>
                   <div className="flex-1 overflow-y-auto" style={{ backgroundColor: '#FAF8F6' }}>
                     {Component ? (
-                      <Component />
-                    ) : loadingErrors[variationId] ? (
+                      needsViewportProvider ? (
+                        <ViewportProvider>
+                          <Component />
+                        </ViewportProvider>
+                      ) : (
+                        <Component />
+                      )
+                    ) : loadingErrors["production"] ? (
                       <div className="p-6 space-y-4">
                         <div className="text-sm text-destructive font-medium">
                           Failed to load component
                         </div>
                         <div className="text-sm text-muted-foreground">
-                          {loadingErrors[variationId]}
+                          {loadingErrors["production"]}
                         </div>
-                        <Button
-                          variant="outline"
-                          onClick={() => {
-                            // Retry loading
-                            const loadComponent = async () => {
-                              try {
-                                const Component = await loadVariation(id, variationId)
-                                if (Component) {
-                                  setLoadedComponents((prev) => ({ ...prev, [variationId]: Component }))
-                                  setLoadingErrors((prev) => {
-                                    const updated = { ...prev }
-                                    delete updated[variationId]
-                                    return updated
-                                  })
-                                }
-                              } catch (error) {
-                                console.error(`Retry failed for ${variationId}:`, error)
-                              }
-                            }
-                            loadComponent()
-                          }}
-                        >
-                          Retry
-                        </Button>
                       </div>
                     ) : (
                       <div className="p-6 space-y-4">
@@ -377,10 +352,117 @@ function ComponentPageContent() {
                   </div>
                 </div>
               </div>
-            </TabsContent>
-          )
-        })}
-      </Tabs>
+            )
+          })()}
+        </div>
+      ) : (
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <div className="flex items-center justify-between mb-4">
+            <TabsList>
+              {activeVariations.map((variationId) => (
+                <TabsTrigger key={variationId} value={variationId}>
+                  {variationId === "production" ? "Production" : variationId}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </div>
+
+          {activeVariations.map((variationId) => {
+            const Component = loadedComponents[variationId]
+            const description = getVariationDescription(id, variationId)
+            const isProductionVar = variationId === "production"
+            const showDesc = showDescription[variationId] || false
+            
+            return (
+              <TabsContent key={variationId} value={variationId} className="mt-0">
+                <div className="bg-card border rounded-lg flex flex-col" style={{ minHeight: '992px', backgroundColor: '#FAF8F6' }}>
+                  <div className="flex flex-col p-6 pb-4 border-b flex-shrink-0 gap-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3 flex-1">
+                        <h2 className="text-lg font-semibold">
+                          {isProductionVar ? "Production" : `Variation ${variationId}`}
+                        </h2>
+                        {description && (
+                          <>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => setShowDescription({ ...showDescription, [variationId]: !showDesc })}
+                              className="h-auto p-1 text-muted-foreground hover:text-foreground"
+                              aria-label={showDesc ? "Hide description" : "Show description"}
+                            >
+                              {showDesc ? <ViewOff size={16} /> : <View size={16} />}
+                            </Button>
+                            {showDesc && (
+                              <p className="text-sm text-muted-foreground">
+                                {description}
+                              </p>
+                            )}
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex-1 overflow-hidden" style={{ backgroundColor: '#FAF8F6' }}>
+                    <div className="flex-1 overflow-y-auto" style={{ backgroundColor: '#FAF8F6' }}>
+                      {Component ? (
+                        needsViewportProvider ? (
+                          <ViewportProvider>
+                            <Component />
+                          </ViewportProvider>
+                        ) : (
+                          <Component />
+                        )
+                      ) : loadingErrors[variationId] ? (
+                        <div className="p-6 space-y-4">
+                          <div className="text-sm text-destructive font-medium">
+                            Failed to load component
+                          </div>
+                          <div className="text-sm text-muted-foreground">
+                            {loadingErrors[variationId]}
+                          </div>
+                          <Button
+                            variant="outline"
+                            onClick={() => {
+                              // Retry loading
+                              const loadComponent = async () => {
+                                try {
+                                  const Component = await loadVariation(id, variationId)
+                                  if (Component) {
+                                    setLoadedComponents((prev) => ({ ...prev, [variationId]: Component }))
+                                    setLoadingErrors((prev) => {
+                                      const updated = { ...prev }
+                                      delete updated[variationId]
+                                      return updated
+                                    })
+                                  }
+                                } catch (error) {
+                                  console.error(`Retry failed for ${variationId}:`, error)
+                                }
+                              }
+                              loadComponent()
+                            }}
+                          >
+                            Retry
+                          </Button>
+                        </div>
+                      ) : (
+                        <div className="p-6 space-y-4">
+                          <div className="text-sm text-muted-foreground">
+                            Loading component...
+                          </div>
+                          <Skeleton className="h-8 w-48" />
+                          <Skeleton className="h-64 w-full" />
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </TabsContent>
+            )
+          })}
+        </Tabs>
+      )}
 
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
@@ -410,7 +492,9 @@ export default function PrototypePage() {
         <Skeleton className="h-64 w-full" />
       </div>
     }>
-      <ComponentPageContent />
+      <PrototypeModeProvider>
+        <ComponentPageContent />
+      </PrototypeModeProvider>
     </Suspense>
   )
 }

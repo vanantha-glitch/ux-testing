@@ -5,12 +5,12 @@ import * as THREE from "three"
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js"
 import { STLLoader } from "three/examples/jsm/loaders/STLLoader.js"
 import { OBJLoader } from "three/examples/jsm/loaders/OBJLoader.js"
-import { useViewport, Model } from "./viewport/viewport-context"
-import { useTransformControls } from "./viewport/transform-controls"
-import { validatePrintableArea } from "./viewport/printable-area-validator"
+import { useViewport, Model } from "../../viewport/viewport-context"
+import { useTransformControls } from "../../viewport/transform-controls"
+import { validatePrintableArea } from "../../viewport/printable-area-validator"
 import { useToast } from "@/hooks/use-toast"
-import { BUILD_PLATE_CONFIGS } from "./viewport/build-plate-config"
-import { MODEL_CONFIGS } from "./viewport/model-config"
+import { BUILD_PLATE_CONFIGS } from "../../viewport/build-plate-config"
+import { MODEL_CONFIGS } from "../../viewport/model-config"
 import {
   Select,
   SelectContent,

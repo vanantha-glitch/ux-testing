@@ -3,35 +3,35 @@
 import dynamic from "next/dynamic"
 import { Suspense } from "react"
 import { Skeleton } from "@/components/ui/skeleton"
-import { ViewportProvider } from "./viewport/viewport-context"
+import { ViewportProvider } from "../../viewport/viewport-context"
 
 // Dynamically import the production components
-const TopBarProduction = dynamic(() => import("./top-bar/production").then(mod => ({ default: mod.default })), {
+const TopBarProduction = dynamic(() => import("../../organisms/cura-cloud/top-bar/production").then(mod => ({ default: mod.default })), {
   ssr: false,
   loading: () => <Skeleton className="h-16 w-full" />
 })
 
-const RightPanelBehaviorV2 = dynamic(() => import("./right-panel/production").then(mod => ({ default: mod.default })), {
+const RightPanelBehaviorV2 = dynamic(() => import("../../organisms/cura-cloud/right-panel/production").then(mod => ({ default: mod.default })), {
   ssr: false,
   loading: () => <Skeleton className="h-[896px] w-[240px]" />
 })
 
-const AdjustmentTools = dynamic(() => import("./adjustment-tools").then(mod => ({ default: mod.default })), {
+const AdjustmentTools = dynamic(() => import("../../organisms/cura-cloud/adjustment-tools").then(mod => ({ default: mod.default })), {
   ssr: false,
   loading: () => <Skeleton className="h-full w-[300px]" />
 })
 
-const Viewport = dynamic(() => import("./viewport").then(mod => ({ default: mod.default })), {
+const Viewport = dynamic(() => import("../../organisms/cura-cloud/viewport").then(mod => ({ default: mod.default })), {
   ssr: false,
   loading: () => <Skeleton className="h-full w-full" />
 })
 
-const AxisTriad = dynamic(() => import("./axis-triad").then(mod => ({ default: mod.default })), {
+const AxisTriad = dynamic(() => import("../../axis-triad").then(mod => ({ default: mod.default })), {
   ssr: false,
   loading: () => null,
 })
 
-export default function FullUI() {
+export default function CuraCloudProduction() {
   return (
     <ViewportProvider initialPrinterId="ultimaker-method-x">
     <div 
@@ -130,7 +130,7 @@ export default function FullUI() {
         </div>
       </div>
 
-      {/* Axis triad overlay - bottom left of full UI */}
+      {/* Axis triad overlay - bottom left of Cura Cloud page */}
       <div
         className="absolute"
         style={{

@@ -5,7 +5,7 @@ import React from "react"
 /**
  * AxisTriad
  * Simple visual XYZ axis indicator, rendered as a transparent overlay.
- * Currently a static legend; only used in the Full UI prototype.
+ * Currently a static legend; only used in the Cura Cloud page prototype.
  */
 export default function AxisTriad() {
   return (
@@ -52,6 +52,7 @@ export default function AxisTriad() {
     </div>
   )
 }
+
 
 
 

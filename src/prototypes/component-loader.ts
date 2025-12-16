@@ -2,25 +2,35 @@
  * Component Loader
  * 
  * Explicitly maps component variations to their imports for Next.js compatibility
+ * Supports both page and organism variations
  */
 
 import { ComponentType } from "react"
 
-// Import all variation components explicitly
+// Import page variations
+// Cura Cloud page variations
+import CuraCloudProduction from "./components/pages/cura-cloud/production"
+
+// Import organism variations
 // Right Panel variations
-import RightPanelProduction from "./components/right-panel/production"
-import RightPanelV2 from "./components/right-panel/v2"
-import RightPanelBehaviorV2 from "./components/right-panel/behavior-v2"
-import RightPanelBehaviorV3 from "./components/right-panel/behavior-v3"
+import RightPanelProduction from "./components/organisms/cura-cloud/right-panel/production"
+import RightPanelV2 from "./components/organisms/cura-cloud/right-panel/v2"
+import RightPanelBehaviorV2 from "./components/organisms/cura-cloud/right-panel/behavior-v2"
+import RightPanelBehaviorV3 from "./components/organisms/cura-cloud/right-panel/behavior-v3"
 
 // Top Bar variations
-import TopBarProduction from "./components/top-bar/production"
+import TopBarProduction from "./components/organisms/cura-cloud/top-bar/production"
 
 // Type for component map
 type ComponentMap = Record<string, Record<string, ComponentType>>
 
 // Map of componentId -> variationId -> Component
 const componentMap: ComponentMap = {
+  // Pages
+  "cura-cloud": {
+    production: CuraCloudProduction,
+  },
+  // Organisms
   "right-panel": {
     production: RightPanelProduction,
     "support.v2": RightPanelV2,

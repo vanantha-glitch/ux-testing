@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Folder, Edit, Notification, CloudUpload, Reset, ChevronDown, Clean, Grid, Select, CaretDown } from "@/lib/icons"
 import { SvgIcon } from "@/components/icons/svg-icon"
-import { useViewport } from "../viewport/viewport-context"
+import { useViewport } from "../../../viewport/viewport-context"
 
 export default function TopBarProduction() {
   const { models, addModel, clearModels } = useViewport()

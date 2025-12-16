@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation"
 import { getPrototype, getPrototypeVariantUrl, hasVariation } from "@/prototypes/registry"
 import { cn } from "@/lib/utils"
-import { Link2 } from "@carbon/icons-react"
+import { Link } from "@carbon/icons-react"
 
 export interface PrototypeMentionProps {
   prototypeId: string
@@ -75,7 +75,7 @@ export function PrototypeMention({
       title={`View ${prototype.name}${variationId !== "production" ? ` (${variationId})` : " (Production)"}`}
     >
       {displayText}
-      {showIcon && <Link2 size={12} className="opacity-60" />}
+      {showIcon && <Link size={12} className="opacity-60" />}
     </a>
   )
 }

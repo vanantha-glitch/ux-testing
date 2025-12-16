@@ -1,7 +1,9 @@
 import { ComponentType } from "react"
-import AdjustmentTools from "./components/adjustment-tools"
-import FullUI from "./components/full-ui"
-import Viewport from "./components/viewport"
+import AdjustmentTools from "./components/organisms/cura-cloud/adjustment-tools"
+import CuraCloudProduction from "./components/pages/cura-cloud/production"
+import Viewport from "./components/organisms/cura-cloud/viewport"
+
+export type PrototypeMode = "production" | "experiments"
 
 export interface Variation {
   id: string
@@ -15,7 +17,7 @@ export interface Branch {
   variations: string[] // Variation IDs in this branch (production is always included)
 }
 
-export interface Prototype {
+export interface BasePrototype {
   id: string
   name: string
   description: string
@@ -26,6 +28,17 @@ export interface Prototype {
   branches?: Branch[] // Branches/exploration types for organizing variations
   variationDetails?: Record<string, Variation> // Details about each variation
 }
+
+export interface PagePrototype extends BasePrototype {
+  type: "page"
+}
+
+export interface OrganismPrototype extends BasePrototype {
+  type: "organism"
+  pageId: string // The page this organism belongs to
+}
+
+export type Prototype = PagePrototype | OrganismPrototype
 
 export interface FormFieldDescription {
   name: string
@@ -38,14 +51,26 @@ export interface FormFieldDescription {
 }
 
 export const prototypes: Prototype[] = [
+  // Pages
   {
-    id: "full-ui",
-    name: "Full UI",
-    description: "Complete UI layout with top bar, adjustment tools, and right panel",
-    component: FullUI,
-    hasVariations: false,
+    type: "page",
+    id: "cura-cloud",
+    name: "Cura Cloud",
+    description: "Complete Cura Cloud page with top bar, adjustment tools, viewport, and right panel",
+    component: CuraCloudProduction,
+    hasVariations: true,
+    variations: ["production"],
+    variationDetails: {
+      production: {
+        id: "production",
+        description: "Production version - source of truth",
+      },
+    },
   },
+  // Organisms - Cura Cloud
   {
+    type: "organism",
+    pageId: "cura-cloud",
     id: "right-panel",
     name: "Right Panel",
     description: "Right panel component rebuilt from Figma design",
@@ -86,6 +111,8 @@ export const prototypes: Prototype[] = [
     },
   },
   {
+    type: "organism",
+    pageId: "cura-cloud",
     id: "top-bar",
     name: "Top Bar",
     description: "Top bar component with toolbar, filename editing, and notifications",
@@ -99,6 +126,8 @@ export const prototypes: Prototype[] = [
     },
   },
   {
+    type: "organism",
+    pageId: "cura-cloud",
     id: "adjustment-tools",
     name: "Adjustment Tools",
     description: "Model adjustment toolbar with Move, Scale, Rotate, and Multiply tools",
@@ -106,6 +135,8 @@ export const prototypes: Prototype[] = [
     hasVariations: false,
   },
   {
+    type: "organism",
+    pageId: "cura-cloud",
     id: "viewport",
     name: "Viewport",
     description: "3D viewport component for viewing and rotating STL models using Three.js",
@@ -116,6 +147,38 @@ export const prototypes: Prototype[] = [
 
 export function getPrototype(id: string): Prototype | undefined {
   return prototypes.find((p) => p.id === id)
+}
+
+export function getPages(): PagePrototype[] {
+  return prototypes.filter((p): p is PagePrototype => p.type === "page")
+}
+
+export function getOrganisms(): OrganismPrototype[] {
+  return prototypes.filter((p): p is OrganismPrototype => p.type === "organism")
+}
+
+export function getOrganismsForPage(pageId: string): OrganismPrototype[] {
+  return prototypes.filter((p): p is OrganismPrototype => p.type === "organism" && p.pageId === pageId)
+}
+
+export function isPage(prototype: Prototype): prototype is PagePrototype {
+  return prototype.type === "page"
+}
+
+export function isOrganism(prototype: Prototype): prototype is OrganismPrototype {
+  return prototype.type === "organism"
+}
+
+export function filterByMode(mode: PrototypeMode): Prototype[] {
+  if (mode === "production") {
+    // Only show prototypes that have production variation or no variations
+    return prototypes.filter(p => {
+      if (!p.hasVariations) return true
+      return p.variations?.includes("production") ?? false
+    })
+  }
+  // Experiments mode shows everything
+  return prototypes
 }
 
 export function getActiveVariations(componentId: string): string[] {

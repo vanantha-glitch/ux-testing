@@ -39,7 +39,7 @@ export function useTransformControls({
 
     // Clean up any existing controls before creating new ones
     if (controlsRef.current) {
-      scene.remove(controlsRef.current)
+      scene.remove(controlsRef.current as unknown as THREE.Object3D)
       controlsRef.current.dispose()
       controlsRef.current = null
     }
@@ -50,11 +50,10 @@ export function useTransformControls({
     // which we've already aligned with the center of its bounding volume.
     controls.attach(object)
 
-    // Initial mode and visibility
+    // Initial mode and enabled state
     const initialMode = mode || "translate"
     controls.setMode(initialMode)
     controls.enabled = enabled
-    controls.visible = enabled
 
     // Disable orbit controls when dragging
     controls.addEventListener("dragging-changed", (event) => {
@@ -70,12 +69,12 @@ export function useTransformControls({
       }
     })
 
-    scene.add(controls)
+    scene.add(controls as unknown as THREE.Object3D)
     controlsRef.current = controls
 
     return () => {
       if (controlsRef.current) {
-        scene.remove(controlsRef.current)
+        scene.remove(controlsRef.current as unknown as THREE.Object3D)
         controlsRef.current.dispose()
         controlsRef.current = null
       }
@@ -89,11 +88,10 @@ export function useTransformControls({
     }
   }, [mode])
 
-  // Update enabled state / visibility when it changes
+  // Update enabled state when it changes
   useEffect(() => {
     if (controlsRef.current) {
       controlsRef.current.enabled = enabled
-      controlsRef.current.visible = enabled
     }
   }, [enabled])
 

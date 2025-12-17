@@ -5,6 +5,12 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+  InputGroupText,
+} from "@/components/ui/input-group"
 import { SvgIcon } from "@/components/icons/svg-icon"
 import { cn } from "@/lib/utils"
 import { useViewport } from "../../viewport/viewport-context"
@@ -33,15 +39,17 @@ function CoordinateInput({ label, value, onChange, unit, labelColor = "blue" }: 
       <Label className={cn("text-xs font-semibold min-w-[16px]", labelColors[labelColor])}>
         {label}
       </Label>
-      <div className="flex items-center gap-1 border border-gray-200 rounded px-2 py-1.5 bg-white flex-1">
-        <Input
+      <InputGroup className="flex-1 h-8 border-[#EAEAEA]">
+        <InputGroupInput
           type="text"
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className="border-0 p-0 h-auto text-xs focus-visible:ring-0 focus-visible:ring-offset-0"
+          className="text-xs text-left text-[#282828]"
         />
-        <span className="text-xs text-gray-500">{unit}</span>
-      </div>
+        <InputGroupAddon align="inline-end">
+          <InputGroupText className="text-xs text-[#707070]">{unit}</InputGroupText>
+        </InputGroupAddon>
+      </InputGroup>
     </div>
   )
 }
@@ -232,14 +240,14 @@ function AdjustmentInput({
             <Button variant="ghost" size="sm" className="h-6 w-6 p-0 hover:bg-gray-100">
               <span className="text-xs">−</span>
             </Button>
-            <div className="flex items-center gap-1 border border-gray-200 rounded px-2 py-1.5 bg-white min-w-[32px]">
-              <Input
+            <InputGroup className="min-w-[32px] h-8 border-[#EAEAEA]">
+              <InputGroupInput
                 type="text"
                 value={values.copies || "1"}
                 onChange={(e) => onValuesChange({ ...values, copies: e.target.value })}
-                className="border-0 p-0 h-auto text-xs w-8 text-center focus-visible:ring-0 focus-visible:ring-offset-0"
+                className="text-xs w-8 text-center text-[#282828]"
               />
-            </div>
+            </InputGroup>
             <Button variant="ghost" size="sm" className="h-6 w-6 p-0 hover:bg-gray-100">
               <span className="text-xs">+</span>
             </Button>
@@ -501,10 +509,10 @@ export default function AdjustmentTools() {
 
         {/* Popup Panel */}
         {activeTool && (
-          <div className="w-[286px] shadow-lg border border-gray-200 rounded-lg bg-white">
+          <div className="w-[286px] rounded-lg bg-white">
             <div className="flex flex-col">
               {/* Input Fields Section */}
-              <div className="p-4 border-b border-gray-200">
+              <div className="p-4 border-b border-[#EAEAEA]">
                 <AdjustmentInput
                   type={activeTool}
                   values={values}
@@ -523,7 +531,7 @@ export default function AdjustmentTools() {
 
               {/* Action Buttons (only for multiply) */}
               {activeTool === "multiply" && (
-                <div className="flex justify-end gap-2 p-2 border-t border-gray-200">
+                <div className="flex justify-end gap-2 p-2 border-t border-[#EAEAEA]">
                   <Button variant="ghost" size="sm" onClick={handleCancel}>
                     Cancel
                   </Button>
